@@ -108,6 +108,10 @@
   .hatBtn.sel{border-color:var(--gold);color:var(--gold)}
   #enterBtn{width:100%;margin-top:6px;background:linear-gradient(90deg,#ffc46a,#ff9d3c);border:none;border-radius:13px;padding:15px;font-size:15px;font-weight:800;letter-spacing:.15em;color:#241a06}
   #joinNote{font-size:11px;color:#9c917f;margin-top:10px;line-height:1.6}
+  /* BUG-004: mobile keeps the original single-column flow — wrappers are
+     transparent (display:contents) so #avPrev/#nameInput/etc render exactly
+     as before. The 2-col grid is opted into only at >=761px (see @media below). */
+  #joinBody,#joinLeft,#joinRight{display:contents}
   /* person card (v3 — slide-up like the shared design) */
   #psTag{color:#9c917f;font-size:13px;margin:-4px 0 6px}
   #psTalk{display:none;background:#1c1712;border:1px solid #332a21;border-radius:12px;padding:10px 12px;font-size:13px;color:var(--gold);margin:6px 0 4px;line-height:1.45}
@@ -121,6 +125,42 @@
   .toastMsg{background:rgba(23,19,16,.92);border:1px solid rgba(255,196,106,.45);border-radius:12px;padding:9px 16px;font-size:13px;animation:tIn .3s,tOut .4s 3.6s forwards;max-width:92vw}
   @keyframes tIn{from{opacity:0;transform:translateY(-8px)}}
   @keyframes tOut{to{opacity:0}}
+  /* =========================================================================
+     BUG-004 — DESKTOP RESPONSIVE CHROME (>=761px only)
+     Breakpoint reuses the canvas MOBILE_MAX=760 so the DOM and the camera-vs-
+     contain switch agree on one line. EVERYTHING below 761px is untouched, so
+     mobile (Disha's iPhone, installed PWA) is provably identical to today.
+     clamp() lower bounds are pinned to today's exact px → no mobile drift.
+     ========================================================================= */
+  @media(min-width:761px){
+    /* --- ENTRY: Option B two-column card (avatar LEFT, form RIGHT) --- */
+    #joinCard{width:min(94vw,760px);padding:30px 34px}
+    #joinCard h1{font-size:26px}
+    #joinCard .tag{font-size:11px;margin:8px 0 22px}
+    #joinBody{display:grid;grid-template-columns:230px 1fr;gap:34px;align-items:center;text-align:left}
+    #joinLeft{display:flex;flex-direction:column;align-items:center;justify-content:center}
+    #joinRight{display:block}
+    #avPrev{width:150px;height:177px}
+    /* form rows left-align in the right column; preview/title still centered */
+    #joinRight .row{justify-content:flex-start}
+    #joinNote{text-align:left}
+    /* --- BOTTOM MENU BAR: centered max-width island (~560-640px) ---
+       #bar is position:absolute;left:0;right:0 on mobile. To make it a centered
+       island we pin it to the horizontal centre and cap its width; the buttons
+       size to content and the row stays centered within the island. */
+    #bar{left:50%;right:auto;transform:translateX(-50%);width:auto;max-width:min(640px,92vw);
+         justify-content:center;gap:clamp(7px,1.2vw,12px)}
+    #bar>*{flex:0 0 auto}
+    .barBtn{font-size:clamp(13px,1.1vw,15px);padding:clamp(10px,1.1vw,13px) clamp(12px,1.4vw,18px);border-radius:clamp(14px,1.3vw,16px)}
+    /* --- NAV TABS: centered max-width track, fixed-width tabs ---
+       #tabbar still spans full width (so its top border + blur read as a real
+       footer bar), but the tabs themselves are fixed-width and centered in a
+       max-width track via justify-content:center. */
+    #tabbar{justify-content:center;gap:clamp(2px,1vw,18px);
+            padding:6px max(4px,env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom))}
+    .tab{flex:0 0 clamp(80px,8vw,96px);font-size:clamp(10.5px,0.95vw,12px);gap:4px;padding:7px 0}
+    .tab svg{width:clamp(23px,2.2vw,30px);height:clamp(23px,2.2vw,30px)}
+  }
 </style>
 </head>
 <body>
@@ -248,14 +288,23 @@
   <div id="joinCard">
     <h1>KING WEST COMMONS</h1>
     <div class="tag">THE CAFÉ · v2 · COME HANG OUT</div>
-    <canvas id="avPrev" width="220" height="260"></canvas>
-    <input id="nameInput" placeholder="chat alias — just for the lounge" maxlength="14">
-    <input id="tagInput" placeholder="your tagline — e.g. King &amp; Peter · espresso person" maxlength="42" style="width:100%;background:#241e18;border:1px solid #4a3f31;color:var(--cream);border-radius:12px;padding:12px;font-size:13px;text-align:center;outline:none;margin:0 0 10px">
-    <div class="row" id="skinRow"></div>
-    <div class="row" id="colorRow"></div>
-    <div class="row" id="hatRow"></div>
-    <button id="enterBtn">ENTER THE CAFÉ</button>
-    <div id="joinNote">tap the floor to walk · tap a head to talk · tap a circle to join the conversation<br>grab a drink from the red fridge · 🎵 sets the room's vibe<br><br>your real name lives in your Commons profile — the alias is just for the room, and you can change it every visit</div>
+    <!-- BUG-004: two-column wrapper. On mobile (<=760px) this is display:contents
+         so children render in original single-column order → pixel-identical to today.
+         At >=761px it becomes a 2-col grid: avatar LEFT, form RIGHT. -->
+    <div id="joinBody">
+      <div id="joinLeft">
+        <canvas id="avPrev" width="220" height="260"></canvas>
+      </div>
+      <div id="joinRight">
+        <input id="nameInput" placeholder="chat alias — just for the lounge" maxlength="14">
+        <input id="tagInput" placeholder="your tagline — e.g. King &amp; Peter · espresso person" maxlength="42" style="width:100%;background:#241e18;border:1px solid #4a3f31;color:var(--cream);border-radius:12px;padding:12px;font-size:13px;text-align:center;outline:none;margin:0 0 10px">
+        <div class="row" id="skinRow"></div>
+        <div class="row" id="colorRow"></div>
+        <div class="row" id="hatRow"></div>
+        <button id="enterBtn">ENTER THE CAFÉ</button>
+        <div id="joinNote">tap the floor to walk · tap a head to talk · tap a circle to join the conversation<br>grab a drink from the red fridge · 🎵 sets the room's vibe<br><br>your real name lives in your Commons profile — the alias is just for the room, and you can change it every visit</div>
+      </div>
+    </div>
   </div>
 </div>
 
