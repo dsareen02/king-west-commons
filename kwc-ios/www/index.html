@@ -1306,6 +1306,9 @@ function buildJoin(){
 }
 buildJoin();
 setInterval(()=>{if(!joined)drawPreview()},400);
+// live-update the left preview (name label above head + tagline under avatar) on every keystroke
+$('nameInput').addEventListener('input',drawPreview);
+$('tagInput').addEventListener('input',drawPreview);
 $('enterBtn').onclick=async()=>{
   const n=$('nameInput').value.trim();
   if(!n){$('nameInput').focus();return}
