@@ -1271,9 +1271,20 @@ loop();
 const pcv=$('avPrev'),pctx=pcv.getContext('2d');
 function drawPreview(){
   pctx.clearRect(0,0,220,260);pctx.save();pctx.scale(2.2,2.2);pctx.translate(50,52);
-  const fake={x:0,y:50,tx:0,ty:50,name:me.name||'you',skin:me.skin,color:me.color,hat:me.hat,holding:'coke',id:'x'};
+  // live values straight from the setup inputs so name + tagline track every keystroke
+  const ni=$('nameInput'),ti=$('tagInput');
+  const liveName=(ni&&ni.value.trim())||me.name||'you';
+  const liveTag=(ti?ti.value.trim():'')||me.tagline||'';
+  const fake={x:0,y:50,tx:0,ty:50,name:liveName,skin:me.skin,color:me.color,hat:me.hat,holding:'coke',id:'x'};
   const old=ctx;ctx=pctx;
   try{drawAvatar(fake,performance.now())}finally{ctx=old}
+  // tagline line under the avatar, café style (only on the setup preview)
+  if(liveTag){
+    pctx.font='italic 8px Avenir Next, sans-serif';pctx.textAlign='center';
+    const tx=liveTag.length>34?liveTag.slice(0,33)+'…':liveTag;
+    pctx.fillStyle='rgba(255,226,173,0.78)';
+    pctx.fillText(tx,0,68);
+  }
   pctx.restore();
 }
 function buildJoin(){
