@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+# kwc — King West Commons safe-git helper.
+# Wraps git + GitHub (gh) into a few simple commands so each Claude session can
+# work on its OWN branch and merge safely, with no clobbering of other sessions.
+set -euo pipefail
+
+# Always operate from the repo root (the folder this script lives in).
+cd "$(dirname "$0")"
+
+DEFAULT_BRANCH="main"
+
+c_green=$'\033[0;32m'; c_red=$'\033[0;31m'; c_yel=$'\033[0;33m'; c_off=$'\033[0m'
+say(){ printf "%s\n" "$*"; }
+ok(){ printf "${c_green}✓ %s${c_off}\n" "$*"; }
+warn(){ printf "${c_yel}! %s${c_off}\n" "$*"; }
+die(){ printf "${c_red}✗ %s${c_off}\n" "$*" >&2; exit 1; }
+
+cur(){ git branch --show-current; }
+
+cmd_start(){
+  local name="${1:-}"
+  [ -n "$name" ] || die "Usage: ./kwc start <branch-name>   e.g. ./kwc start build-004"
+  # Refuse if there are uncommitted changes — this protects another session's in-progress work.
+  if ! git diff --quiet || ! git diff --cached --quiet; then
+    die "There are unsaved changes in this folder — another session may be mid-edit.
+   Run './kwc status' to see them. Save them with './kwc save \"msg\"' before starting a new branch."
+  fi
+  git checkout "$DEFAULT_BRANCH" -q
+  git pull --ff-only -q origin "$DEFAULT_BRANCH" 2>/dev/null || warn "Could not pull latest main (offline?). Using local main."
+  if git show-ref --verify --quiet "refs/heads/$name"; then
+    git checkout "$name" -q
+    ok "On existing branch '$name'. Your edits here are isolated from other sessions."
+  else
+    git checkout -b "$name" -q
+    ok "Created branch '$name' off the latest main. Edit away — your work is isolated."
+  fi
+}
+
+cmd_save(){
+  local msg="${*:-}"
+  [ -n "$msg" ] || die "Usage: ./kwc save \"what you changed\""
+  local br; br="$(cur)"
+  [ "$br" != "$DEFAULT_BRANCH" ] || die "You're on '$DEFAULT_BRANCH' (protected). Run './kwc start <name>' first so you work on your own branch."
+  git add -A
+  if git diff --cached --quiet; then warn "Nothing to save (no changes detected)."; return 0; fi
+  git commit -q -m "$msg"
+  git push -q -u origin "$br"
+  ok "Committed & pushed to branch '$br'."
+  if gh pr view "$br" >/dev/null 2>&1; then
+    ok "Existing pull request updated with this change. Run './kwc ship' to merge when approved."
+  else
+    gh pr create --base "$DEFAULT_BRANCH" --head "$br" --title "$br" --body "Work from the '$br' session. First change: $msg" >/dev/null
+    ok "Opened a pull request for '$br'. Review on GitHub, then './kwc ship' to merge."
+  fi
+}
+
+cmd_ship(){
+  local br; br="$(cur)"
+  [ "$br" != "$DEFAULT_BRANCH" ] || die "You're on main — nothing to ship. Run ship from a feature branch."
+  gh pr view "$br" >/dev/null 2>&1 || die "No open pull request for '$br'. Run './kwc save \"msg\"' first."
+  say "Merging '$br' into $DEFAULT_BRANCH …"
+  if ! gh pr merge "$br" --merge --delete-branch; then
+    die "Merge did NOT complete — most likely a MERGE CONFLICT (another session changed the same lines).
+   Nothing was lost. Open the PR on GitHub to resolve it, or ask Disha. Your branch is safe."
+  fi
+  git checkout "$DEFAULT_BRANCH" -q
+  git pull --ff-only -q origin "$DEFAULT_BRANCH" 2>/dev/null || true
+  ok "Merged into $DEFAULT_BRANCH and updated your local copy. main is now the new good version."
+}
+
+cmd_status(){
+  say "Branch:  $(cur)"
+  say "Folder:  $(pwd)"
+  say "—— unsaved changes ——"
+  git status -s || true
+  say "—— open pull requests ——"
+  gh pr list --state open 2>/dev/null || say "(could not reach GitHub)"
+}
+
+case "${1:-help}" in
+  start)  shift; cmd_start "$@";;
+  save)   shift; cmd_save "$@";;
+  ship)   cmd_ship;;
+  status) cmd_status;;
+  *) cat <<'EOF'
+kwc — King West Commons safe-git helper
+
+  ./kwc start <name>     Begin work on your own branch   (e.g. ./kwc start build-004)
+  ./kwc save "message"   Commit + push your change, and open a pull request
+  ./kwc ship             Merge your branch into main (after Disha approves)
+  ./kwc status           Show your branch, unsaved changes, and open PRs
+
+Typical session:
+  ./kwc start search-icon
+  ...make edits...
+  ./kwc save "added search icon to header"
+  ./kwc ship
+EOF
+  ;;
+esac
