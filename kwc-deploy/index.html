@@ -324,27 +324,28 @@ const CONFIG={
   ROOM:'commons-cafe-1',
   CAP:12,
   /* Bettermode pages for the tabs (embedded in-app)
-     BUILD-004 (06-13): repointed from the old "King West" v1 spaces to the new
-     "King West v2" collection (BUILD-003 / A12) so URLs/slugs are editable for the
-     A8 domain move. One tab = one space (per-tab = per-space design, BUILD-001):
-       COMMONS   → the-commons-lafu4kq2  (Discussion CMS)
-       PASSALONG → pass-along-a2x1w716   (Pass-along post type)
-       DIRECTORY → directory-915e6iay    (view-only, no post type)
-     Params kept from the v1 config (the format wasn't the bug, the stale slugs were):
-     header=false (drops the space hero so there's no duplicate title — the app's own
-     "King West Commons" bar provides the title, D13) + composer=true + readonly=false.
-     ⚠️ BUG-003 nav-strip is STILL UNSOLVED on the per-space endpoint: layout=basic is
-     documented for the COMMUNITY-WIDE /embed endpoint, NOT /embed/space/<slug> — it is
-     silently ignored here (verified 06-13), so the leftover param is harmless but inert.
-     The community-wide /embed?layout=basic endpoint WOULD strip the chrome, but it
-     renders the WHOLE community (all spaces) in one frame, which breaks this
-     one-tab-one-space model + BUILD-001 → that's a PRODUCT decision for Disha,
-     deliberately NOT switched here. BUG-003 stays parked.
-     Host stays www.* until the A8 domain move (community.*). NEEDS on-device confirm.
-     Settings pages (Profile/Account/Notifications) are NOT spaces → left untouched. */
-  COMMONS_URL:'https://www.kingwestcommons.ca/embed/space/the-commons-lafu4kq2?header=false&composer=true&readonly=false&layout=basic',
-  PASSALONG_URL:'https://www.kingwestcommons.ca/embed/space/pass-along-a2x1w716?header=false&composer=true&readonly=false&layout=basic',
-  DIRECTORY_URL:'https://www.kingwestcommons.ca/embed/space/directory-915e6iay?header=false&composer=true&readonly=false&layout=basic',
+     A11 LINK FIX (06-14): the prior /embed/space/<slug> URLs pointed at outdated slugs
+     on the wrong host (www.kingwestcommons.ca) so the tabs loaded nothing. Disha pulled
+     the CORRECT live page URLs from the community. Repointed to the canonical full-page
+     URLs on the real network host kingwestcommons.bettermode.io:
+       COMMONS   → /The-Commons
+       PASSALONG → /pass-along
+       DIRECTORY → /directory
+     FORM = plain full-page URLs (NOT the /embed/space endpoint), deliberately:
+       (1) verified 06-14 — all three return 200 AND send frame-ancestors * (iframe-
+           embeddable), so they render correctly in the app's iframes;
+       (2) full-page URLs render Bettermode's OWN native chrome (top brand + search popup
+           + profile dropdown) — which matches Disha's nav-bar DIRECTION: keep Bettermode's
+           native search + profile behavior, only customize brand/logo. The embed endpoint
+           stripped that chrome, which is the opposite of what she wants to SEE now.
+     ⚠️ NAV-BAR work is NOT done here — deferred until Disha checks the corrected links.
+        Next step (pending her review): stop overriding Bettermode's native search popup +
+        profile dropdown (a custom Header block in the Customizer hides them today), while
+        still customizing brand/logo. No nav/profile wiring changed in this pass.
+     Settings pages (Profile/Account/Notifications) below are NOT spaces → left untouched. */
+  COMMONS_URL:'https://kingwestcommons.bettermode.io/The-Commons',
+  PASSALONG_URL:'https://kingwestcommons.bettermode.io/pass-along',
+  DIRECTORY_URL:'https://kingwestcommons.bettermode.io/directory',
   PROFILE_URL:'https://www.kingwestcommons.ca/settings/profile',
   ACCOUNT_URL:'https://www.kingwestcommons.ca/settings/account',
   NOTIF_URL:'https://www.kingwestcommons.ca/settings/notifications',
