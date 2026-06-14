@@ -6,6 +6,12 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "8743", "--directory", "kwc-deploy"],
       "port": 8743
+    },
+    {
+      "name": "kwc-src",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8744"],
+      "port": 8744
     }
   ]
 }
