@@ -1270,8 +1270,9 @@ loop();
 /* ---------- join screen ---------- */
 const pcv=$('avPrev'),pctx=pcv.getContext('2d');
 function drawPreview(){
-  pctx.clearRect(0,0,220,260);pctx.save();pctx.scale(2.2,2.2);pctx.translate(50,52);
+  pctx.clearRect(0,0,220,260);pctx.save();pctx.scale(2.2,2.2);pctx.translate(50,46);
   // live values straight from the setup inputs so name + tagline track every keystroke
+  // (translate Y lifted 52->46 to free room at the bottom for the live tagline line)
   const ni=$('nameInput'),ti=$('tagInput');
   const liveName=(ni&&ni.value.trim())||me.name||'you';
   const liveTag=(ti?ti.value.trim():'')||me.tagline||'';
@@ -1284,7 +1285,7 @@ function drawPreview(){
     let fs=8;pctx.font='italic '+fs+'px Avenir Next, sans-serif';
     // shrink-to-fit so the full tagline stays inside the preview canvas (≈96 local px wide)
     while(fs>5&&pctx.measureText(liveTag).width>96){fs-=0.5;pctx.font='italic '+fs+'px Avenir Next, sans-serif';}
-    pctx.fillText(liveTag,0,68);
+    pctx.fillText(liveTag,0,64);
   }
   pctx.restore();
 }
