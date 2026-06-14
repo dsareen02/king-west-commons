@@ -1289,10 +1289,11 @@ function drawPreview(){
   try{drawAvatar(fake,performance.now())}finally{ctx=old}
   // tagline line under the avatar, café style (only on the setup preview)
   if(liveTag){
-    pctx.font='italic 8px Avenir Next, sans-serif';pctx.textAlign='center';
-    const tx=liveTag.length>34?liveTag.slice(0,33)+'…':liveTag;
-    pctx.fillStyle='rgba(255,226,173,0.78)';
-    pctx.fillText(tx,0,68);
+    pctx.textAlign='center';pctx.fillStyle='rgba(255,226,173,0.78)';
+    let fs=8;pctx.font='italic '+fs+'px Avenir Next, sans-serif';
+    // shrink-to-fit so the full tagline stays inside the preview canvas (≈96 local px wide)
+    while(fs>5&&pctx.measureText(liveTag).width>96){fs-=0.5;pctx.font='italic '+fs+'px Avenir Next, sans-serif';}
+    pctx.fillText(liveTag,0,68);
   }
   pctx.restore();
 }
