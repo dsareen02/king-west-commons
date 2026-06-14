@@ -133,8 +133,12 @@
      clamp() lower bounds are pinned to today's exact px → no mobile drift.
      ========================================================================= */
   @media(min-width:761px){
-    /* --- ENTRY: Option B two-column card (avatar LEFT, form RIGHT) --- */
-    #joinCard{width:min(94vw,760px);padding:30px 34px}
+    /* --- ENTRY: Option B two-column card (avatar LEFT, form RIGHT) ---
+       At desktop the content becomes a real surfaced card (bg/border/radius);
+       mobile stays the bare centered column on the radial gradient (unchanged). */
+    #joinCard{width:min(94vw,760px);padding:34px 38px;background:rgba(36,30,24,.72);
+              border:1px solid rgba(255,196,106,.22);border-radius:22px;
+              box-shadow:0 24px 70px rgba(0,0,0,.45);backdrop-filter:blur(6px)}
     #joinCard h1{font-size:26px}
     #joinCard .tag{font-size:11px;margin:8px 0 22px}
     #joinBody{display:grid;grid-template-columns:230px 1fr;gap:34px;align-items:center;text-align:left}
