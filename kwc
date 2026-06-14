@@ -1,18 +1,22 @@
 #!/usr/bin/env bash
 # kwc — King West Commons safe-git helper.
 # Wraps git + GitHub (gh) into a few simple commands so each Claude session can
-# work on its OWN branch and merge safely, with no clobbering of other sessions.
+# work on its OWN branch (and optionally its OWN folder via git worktrees) and
+# merge safely, with no clobbering of other sessions.
 set -euo pipefail
 
-# Always operate from the repo root (the folder this script lives in).
+# Always operate from the repo/worktree root (the folder this script lives in).
 cd "$(dirname "$0")"
 
 DEFAULT_BRANCH="main"
+# Worktrees live OUTSIDE iCloud (transient scratch copies; the truth is on GitHub).
+WT_PARENT="$HOME/Documents/kwc-worktrees"
 
-c_green=$'\033[0;32m'; c_red=$'\033[0;31m'; c_yel=$'\033[0;33m'; c_off=$'\033[0m'
+c_green=$'\033[0;32m'; c_red=$'\033[0;31m'; c_yel=$'\033[0;33m'; c_cyan=$'\033[0;36m'; c_off=$'\033[0m'
 say(){ printf "%s\n" "$*"; }
 ok(){ printf "${c_green}✓ %s${c_off}\n" "$*"; }
 warn(){ printf "${c_yel}! %s${c_off}\n" "$*"; }
+info(){ printf "${c_cyan}%s${c_off}\n" "$*"; }
 die(){ printf "${c_red}✗ %s${c_off}\n" "$*" >&2; exit 1; }
 
 cur(){ git branch --show-current; }
@@ -20,7 +24,6 @@ cur(){ git branch --show-current; }
 cmd_start(){
   local name="${1:-}"
   [ -n "$name" ] || die "Usage: ./kwc start <branch-name>   e.g. ./kwc start build-004"
-  # Refuse if there are uncommitted changes — this protects another session's in-progress work.
   if ! git diff --quiet || ! git diff --cached --quiet; then
     die "There are unsaved changes in this folder — another session may be mid-edit.
    Run './kwc status' to see them. Save them with './kwc save \"msg\"' before starting a new branch."
@@ -34,6 +37,41 @@ cmd_start(){
     git checkout -b "$name" -q
     ok "Created branch '$name' off the latest main. Edit away — your work is isolated."
   fi
+}
+
+cmd_new(){
+  local name="${1:-}"
+  [ -n "$name" ] || die "Usage: ./kwc new <name>   creates a SEPARATE folder for a bot to work in parallel"
+  mkdir -p "$WT_PARENT"
+  local path="$WT_PARENT/$name"
+  [ -e "$path" ] && die "A workspace already exists at: $path  (use it, or './kwc done $name' to remove it first)"
+  git fetch -q origin
+  if git show-ref --verify --quiet "refs/heads/$name"; then
+    git worktree add -q "$path" "$name"
+  else
+    git worktree add -q -b "$name" "$path" origin/"$DEFAULT_BRANCH"
+  fi
+  ok "Created an isolated workspace for branch '$name'."
+  info "  Point the bot at this folder:  $path"
+  say  "  Inside it the bot just runs:   ./kwc save \"msg\"   then   ./kwc ship"
+}
+
+cmd_list(){
+  info "Workspaces (git worktrees):"
+  git worktree list
+  say ""
+  info "Open pull requests:"
+  gh pr list --state open 2>/dev/null || say "(could not reach GitHub)"
+}
+
+cmd_done(){
+  local name="${1:-}"
+  [ -n "$name" ] || die "Usage: ./kwc done <name>   removes a finished workspace + its local branch"
+  [ "$(cur)" != "$name" ] || die "You're standing inside '$name'. Run './kwc done $name' from the main app folder, not from this workspace."
+  git worktree remove --force "$WT_PARENT/$name" 2>/dev/null || true
+  git worktree prune
+  git branch -D "$name" 2>/dev/null || true
+  ok "Removed workspace and local branch '$name'. (Anything merged is safe on main/GitHub.)"
 }
 
 cmd_save(){
@@ -59,13 +97,23 @@ cmd_ship(){
   [ "$br" != "$DEFAULT_BRANCH" ] || die "You're on main — nothing to ship. Run ship from a feature branch."
   gh pr view "$br" >/dev/null 2>&1 || die "No open pull request for '$br'. Run './kwc save \"msg\"' first."
   say "Merging '$br' into $DEFAULT_BRANCH …"
-  if ! gh pr merge "$br" --merge --delete-branch; then
+  if ! gh pr merge "$br" --merge; then
     die "Merge did NOT complete — most likely a MERGE CONFLICT (another session changed the same lines).
    Nothing was lost. Open the PR on GitHub to resolve it, or ask Disha. Your branch is safe."
   fi
-  git checkout "$DEFAULT_BRANCH" -q
-  git pull --ff-only -q origin "$DEFAULT_BRANCH" 2>/dev/null || true
-  ok "Merged into $DEFAULT_BRANCH and updated your local copy. main is now the new good version."
+  # Update local main if we're in a normal checkout (worktrees can't all hold main).
+  if git checkout "$DEFAULT_BRANCH" -q 2>/dev/null; then
+    git pull --ff-only -q origin "$DEFAULT_BRANCH" 2>/dev/null || true
+    ok "Merged into $DEFAULT_BRANCH and updated this folder. main is now the new good version."
+  else
+    ok "Merged '$br' into $DEFAULT_BRANCH on GitHub. (This is a worktree; run './kwc done $br' from the main folder to clean up.)"
+  fi
+}
+
+cmd_sync(){
+  git checkout "$DEFAULT_BRANCH" -q 2>/dev/null || die "Could not switch to main here (unsaved changes?). Run './kwc status'."
+  git pull --ff-only -q origin "$DEFAULT_BRANCH" 2>/dev/null || warn "Could not pull (offline?)."
+  ok "This folder is now up to date with the latest main."
 }
 
 cmd_status(){
@@ -79,22 +127,33 @@ cmd_status(){
 
 case "${1:-help}" in
   start)  shift; cmd_start "$@";;
+  new)    shift; cmd_new "$@";;
+  list)   cmd_list;;
+  done)   shift; cmd_done "$@";;
   save)   shift; cmd_save "$@";;
   ship)   cmd_ship;;
+  sync)   cmd_sync;;
   status) cmd_status;;
   *) cat <<'EOF'
 kwc — King West Commons safe-git helper
 
-  ./kwc start <name>     Begin work on your own branch   (e.g. ./kwc start build-004)
+PARALLEL bots (each in its own folder — no collisions, run them all at once):
+  ./kwc new <name>       Create a SEPARATE workspace folder for a bot   (run from the main app folder)
+  ./kwc list             Show all workspaces + open pull requests
+  ./kwc done <name>      Remove a finished workspace + its branch       (run from the main app folder)
+
+INSIDE any workspace (or the main folder), a session does:
   ./kwc save "message"   Commit + push your change, and open a pull request
   ./kwc ship             Merge your branch into main (after Disha approves)
-  ./kwc status           Show your branch, unsaved changes, and open PRs
 
-Typical session:
-  ./kwc start search-icon
-  ...make edits...
-  ./kwc save "added search icon to header"
-  ./kwc ship
+OTHER:
+  ./kwc start <name>     Branch within the CURRENT folder (single-folder / take-turns mode)
+  ./kwc sync             Pull this folder up to the latest main (do this before a Netlify deploy)
+  ./kwc status           Show branch, unsaved changes, and open PRs
+
+Parallel example:
+  ./kwc new search-icon         # then launch a bot pointed at the printed folder
+  ./kwc new badges              # launch another bot — both edit at the same time, safely
 EOF
   ;;
 esac
