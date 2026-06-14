@@ -1,0 +1,9 @@
+{
+  "appId": "ca.kingwestcommons.app",
+  "appName": "King West Commons",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#171310"
+  }
+}
