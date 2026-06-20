@@ -15,3 +15,13 @@ If you want to mark a meaningful milestone with a clear message you MAY run `git
 - NEVER deploy to Netlify (drag of `kwc-deploy/`) without Disha's explicit OK.
 - Disha is new to git/GitHub and must not be given any manual git/folder steps — keep all version-control work invisible to her.
 - `gh` CLI is already logged in on this Mac as `dsareen02`; git push/pull work without prompts.
+
+## 🔴 ALWAYS UPDATE THE GOOGLE SHEET (Drive) — mandatory for every task
+- Canonical tracker = the Google Sheet "King West Commons — Task Tracker"
+  (id `1nH08RJJDxaq2PSh-_UZrWPKvuAiyNhl92yZ0lFknXLM`, tab gid `1284780150`). `TASKS.md` in the
+  **docs repo** (`dsareen02/king-west-commons-docs`) is the working mirror.
+- Every task add/change/complete must end up in BOTH that Sheet and `TASKS.md` — the Sheet must
+  never drift behind. If you have a Sheets write path, write directly; if not (the Drive connector
+  is READ-ONLY today), output a copy-paste-ready row block labelled "🔴 PASTE INTO DRIVE SHEET"
+  for Disha to paste. Keep IDs identical across the Sheet and `TASKS.md`.
+- Full engineer conventions live in the docs repo's `CLAUDE.md`.
