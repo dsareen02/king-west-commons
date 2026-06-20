@@ -109,6 +109,7 @@
   .hatBtn{background:#241e18;border:1px solid #4a3f31;color:var(--cream);border-radius:10px;padding:8px 12px;font-size:13px}
   .hatBtn.sel{border-color:var(--gold);color:var(--gold)}
   #enterBtn{width:100%;margin-top:6px;background:linear-gradient(90deg,#ffc46a,#ff9d3c);border:none;border-radius:13px;padding:15px;font-size:15px;font-weight:800;letter-spacing:.15em;color:#241a06}
+  #anonNote{margin-top:12px;background:rgba(255,196,106,.1);border:1px solid rgba(255,196,106,.4);border-radius:12px;padding:11px 13px;font-size:12.5px;line-height:1.5;color:var(--gold);font-weight:600}
   #joinNote{font-size:11px;color:#9c917f;margin-top:10px;line-height:1.6}
   /* BUG-004: mobile keeps the original single-column flow — wrappers are
      transparent (display:contents) so #avPrev/#nameInput/etc render exactly
@@ -190,44 +191,7 @@
         <button class="barBtn" id="btnBoard">📌 Board</button>
       </div>
     </div>
-    <!-- THE COMMONS -->
-    <div class="view" id="view-commons">
-      <div class="vhead"><h2>King West Commons</h2><a class="vsearch" href="https://www.kingwestcommons.ca/search" aria-label="Search the community"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></a></div>
-      <div class="frameWrap" id="fwCommons"></div>
-    </div>
-    <!-- PASS ALONG -->
-    <div class="view" id="view-passalong">
-      <div class="vhead"><h2>King West Commons</h2><a class="vsearch" href="https://www.kingwestcommons.ca/search" aria-label="Search the community"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></a></div>
-      <div class="frameWrap" id="fwPassalong"></div>
-    </div>
-    <!-- DIRECTORY -->
-    <div class="view" id="view-directory">
-      <div class="vhead"><h2>King West Commons</h2><a class="vsearch" href="https://www.kingwestcommons.ca/search" aria-label="Search the community"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></a></div>
-      <div class="frameWrap" id="fwDirectory"></div>
-    </div>
-    <!-- PROFILE -->
-    <div class="view" id="view-profile">
-      <div class="vhead"><h2>King West Commons</h2></div>
-      <div class="frameWrap" id="fwProfile"></div>
-    </div>
   </div>
-  <nav id="tabbar">
-    <button class="tab on" data-v="room">
-      <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>
-      Lounge</button>
-    <button class="tab" data-v="commons">
-      <svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.6 8.6 0 0 1-3.5-.7L3 21l1.8-4.5A8.4 8.4 0 1 1 21 11.5z"/></svg>
-      The Commons</button>
-    <button class="tab" data-v="passalong">
-      <svg viewBox="0 0 24 24"><path d="M20 7h-9a4 4 0 1 0 0 8h2"/><path d="M17 4l3 3-3 3"/><path d="M4 17h9a4 4 0 1 0 0-8h-2"/><path d="M7 20l-3-3 3-3"/></svg>
-      Pass Along</button>
-    <button class="tab" data-v="directory">
-      <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.4 3.4-5 6.5-5s5.7 1.6 6.5 5"/><circle cx="17.5" cy="9" r="2.7"/><path d="M16.5 14.6c2.6.3 4.4 1.8 5 4.4"/></svg>
-      Directory</button>
-    <button class="tab" data-v="profile">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c1-4 4-6 7.5-6s6.5 2 7.5 6"/></svg>
-      Profile</button>
-  </nav>
 </div>
 <!-- v3: settings (hamburger) -->
 <div id="settings">
@@ -238,6 +202,8 @@
     <div id="aliasRow"><input id="aliasInput" maxlength="14" placeholder="new alias"><button class="send" id="aliasSave">Save</button></div>
     <button class="setItem" id="siOutfit"><b>Outfit</b><span>change your look</span></button>
     <button class="setItem" id="siMusic"><b>Music</b><span id="musicNow">off</span></button>
+    <button class="setItem" id="siNews"><b>📰 AI Wire</b><span>live headlines</span></button>
+    <button class="setItem" id="siBoard"><b>📌 Board</b><span>meetups &amp; notes</span></button>
     <div class="setSec">YOUR COMMONS ACCOUNT</div>
     <button class="setItem" data-bm="PROFILE_URL"><b>Profile</b><span>your real name lives here</span></button>
     <button class="setItem" data-bm="ACCOUNT_URL"><b>Account</b><span>email · password</span></button>
@@ -308,7 +274,8 @@
         <div class="row" id="colorRow"></div>
         <div class="row" id="hatRow"></div>
         <button id="enterBtn">ENTER THE CAFÉ</button>
-        <div id="joinNote">tap the floor to walk · tap a head to talk · tap a circle to join the conversation<br>grab a drink from the red fridge · 🎵 sets the room's vibe<br><br>your real name lives in your Commons profile — the alias is just for the room, and you can change it every visit</div>
+        <div id="anonNote">🕶️ The lounge is anonymous — you show up as your alias, never your real name. Speak freely.</div>
+        <div id="joinNote">tap the floor to walk · tap a head to talk · tap a circle to join the conversation<br>grab a drink from the red fridge · 🎵 sets the room's vibe<br><br>your real name stays in your Commons profile — the alias is just for the room, and you can change it every visit</div>
       </div>
     </div>
   </div>
@@ -1218,6 +1185,8 @@ $('aliasSave').onclick=()=>{
   toast('alias updated — the room sees “'+n+'” now');
 };
 $('siOutfit').onclick=()=>{$('settings').classList.remove('open');buildOutfitSheet();openSheet('outfitSheet')};
+$('siNews').onclick=()=>{$('settings').classList.remove('open');openSheet('newsSheet')};
+$('siBoard').onclick=()=>{$('settings').classList.remove('open');openSheet('boardSheet')};
 $('siMusic').onclick=()=>{
   const order=['off','lounge','rain','beat'];
   const nxt=order[(order.indexOf(Music.vibe)+1)%4];
