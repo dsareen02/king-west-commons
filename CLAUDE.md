@@ -29,7 +29,10 @@ If you want to mark a meaningful milestone with a clear message you MAY run `git
   (id `1nH08RJJDxaq2PSh-_UZrWPKvuAiyNhl92yZ0lFknXLM`, tab gid `1284780150`). `TASKS.md` in the
   **docs repo** (`dsareen02/king-west-commons-docs`) is the working mirror.
 - Every task add/change/complete must end up in BOTH that Sheet and `TASKS.md` — the Sheet must
-  never drift behind. If you have a Sheets write path, write directly; if not (the Drive connector
-  is READ-ONLY today), output a copy-paste-ready row block labelled "🔴 PASTE INTO DRIVE SHEET"
-  for Disha to paste. Keep IDs identical across the Sheet and `TASKS.md`.
+  never drift behind. **Write to the Sheet directly via the Zapier Google Sheets actions**
+  (`execute_zapier_write_action`, `selected_api: GoogleSheetsV2CLIAPI` — `add_row` / `add_row_lines` /
+  `update_row`); the Zapier account has confirmed EDIT access (verified 2026-06-20). The plain Google
+  **Drive** connector canNOT edit sheets — use Zapier, not Drive. App/build tasks go on the
+  **Phase 1 — MVP** tab. Keep IDs identical across the Sheet and `TASKS.md`. Fallback only if the
+  Zapier write fails: a copy-paste-ready row block labelled "🔴 PASTE INTO DRIVE SHEET".
 - Full engineer conventions live in the docs repo's `CLAUDE.md`.
