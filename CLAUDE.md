@@ -16,7 +16,15 @@ If you want to mark a meaningful milestone with a clear message you MAY run `git
 - Disha is new to git/GitHub and must not be given any manual git/folder steps — keep all version-control work invisible to her.
 - `gh` CLI is already logged in on this Mac as `dsareen02`; git push/pull work without prompts.
 
-## 🔴 ALWAYS UPDATE THE GOOGLE SHEET (Drive) — mandatory for every task
+## 🔴 TRACKER HYGIENE — two rules, always
+- **Rule 1 — Capture EVERY task in `TASKS.md`** (docs repo): anything discussed (with Disha or
+  between agents) that is or implies a task, fix, idea, or follow-up gets written into `TASKS.md`;
+  nothing is ever left only in chat.
+- **Rule 2 — Mirror every task to the Google Sheet (Drive):** after any task is
+  discussed/added/changed/completed, it's logged in BOTH `TASKS.md` and the Drive Sheet, which must
+  always match (the Sheet never drifts behind). Details below.
+
+### Rule 2 details
 - Canonical tracker = the Google Sheet "King West Commons — Task Tracker"
   (id `1nH08RJJDxaq2PSh-_UZrWPKvuAiyNhl92yZ0lFknXLM`, tab gid `1284780150`). `TASKS.md` in the
   **docs repo** (`dsareen02/king-west-commons-docs`) is the working mirror.
