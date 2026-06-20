@@ -464,13 +464,14 @@ function drawRoom(t){
   ctx.restore();
   ctx.strokeStyle='#5d4634';ctx.lineWidth=4;rr(w0.x,w0.y,w0.w,w0.h,8);ctx.stroke();
   ctx.beginPath();ctx.moveTo(w0.x+w0.w/2,w0.y);ctx.lineTo(w0.x+w0.w/2,w0.y+w0.h);ctx.stroke();
-  /* Wall wordmark — RIGHT-aligned into the clear top-right wall strip (the band
-     between the window top and the AI-Wire board at x=330,y=30). Moved off the
-     top-left so it no longer hides behind the "KING WEST COMMONS · N here" HUD
-     pill, and pushed down to y=26 so the camera-top no longer clips it. */
-  ctx.font='700 14px Avenir Next, sans-serif';ctx.textAlign='right';
+  /* Wall wordmark — RIGHT-aligned into the clear lower-RIGHT wall band
+     (y≈110-128, below the AI-Wire board/cork which end at y≤108, above the floor
+     line WALL=130). Moved OFF the top-left so it no longer hides behind the
+     "KING WEST COMMONS · N here" HUD pill, and out of the top strip the camera
+     clips. Right-anchored to the room's right edge so it adapts on narrow phones. */
+  ctx.font='700 13px Avenir Next, sans-serif';ctx.textAlign='right';
   ctx.fillStyle='#ffc46a';ctx.shadowColor='#ffc46a';ctx.shadowBlur=12;
-  ctx.fillText('KING WEST COMMONS',322,26);ctx.shadowBlur=0;ctx.textAlign='center';
+  ctx.fillText('KING WEST COMMONS',W-12,124);ctx.shadowBlur=0;ctx.textAlign='center';
   const b=FURN.board;
   ctx.fillStyle='#0d0f14';rr(b.x,b.y,b.w,b.h,8);ctx.fill();
   ctx.strokeStyle='#5d4634';ctx.lineWidth=3;rr(b.x,b.y,b.w,b.h,8);ctx.stroke();
