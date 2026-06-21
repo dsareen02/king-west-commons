@@ -137,9 +137,9 @@
     /* --- ENTRY: Option B two-column card (avatar LEFT, form RIGHT) ---
        At desktop the content becomes a real surfaced card (bg/border/radius);
        mobile stays the bare centered column on the radial gradient (unchanged). */
-    #joinCard{width:min(94vw,760px);padding:34px 38px;background:rgba(36,30,24,.72);
+    #joinCard{width:min(94vw,760px);padding:34px 38px;background:rgba(34,27,20,.45);
               border:1px solid rgba(255,196,106,.22);border-radius:22px;
-              box-shadow:0 24px 70px rgba(0,0,0,.45);backdrop-filter:blur(6px)}
+              box-shadow:0 24px 70px rgba(0,0,0,.45);backdrop-filter:blur(9px)}
     #joinCard h1{font-size:26px}
     #joinCard .tag{font-size:11px;margin:8px 0 22px}
     #joinBody{display:grid;grid-template-columns:230px 1fr;gap:34px;align-items:center;text-align:left}
@@ -460,14 +460,15 @@ fit();addEventListener('resize',fit);
 function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
 let tickerText='THE AI WIRE · loading live headlines…';let tickerX=0;let tramX=-260;
 function drawRoom(t){
-  {const vW=viewVW/scale,vH=viewVH/scale,bd=ctx.createLinearGradient(0,0,0,H);
+  const vx=camX,vy=camY,vW=viewVW/scale,vH=viewVH/scale,vR=vx+vW,vB=vy+vH;
+  {const bd=ctx.createLinearGradient(0,0,0,H);
    bd.addColorStop(0,'#4a3527');bd.addColorStop(WALL/H,'#3a2a1e');
    bd.addColorStop(WALL/H,'#6b4f33');bd.addColorStop(1,'#54391f');
-   ctx.fillStyle=bd;ctx.fillRect(camX,camY,vW,vH);}
+   ctx.fillStyle=bd;ctx.fillRect(vx,vy,vW,vH);}
   const wg=ctx.createLinearGradient(0,0,0,WALL);wg.addColorStop(0,'#4a3527');wg.addColorStop(1,'#3a2a1e');
   ctx.fillStyle=wg;ctx.fillRect(0,0,W,WALL);
   ctx.strokeStyle='rgba(0,0,0,0.12)';ctx.lineWidth=1;
-  for(let y=14;y<WALL;y+=18){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+  for(let y=14;y<WALL;y+=18){ctx.beginPath();ctx.moveTo(vx,y);ctx.lineTo(vR,y);ctx.stroke()}
   const w0=FURN.window;
   ctx.fillStyle='#0e1d2e';rr(w0.x,w0.y,w0.w,w0.h,8);ctx.fill();
   ctx.save();ctx.beginPath();rr(w0.x,w0.y,w0.w,w0.h,8);ctx.clip();
@@ -517,8 +518,8 @@ function drawRoom(t){
   const fg=ctx.createLinearGradient(0,WALL,0,H);fg.addColorStop(0,'#6b4f33');fg.addColorStop(1,'#54391f');
   ctx.fillStyle=fg;ctx.fillRect(0,WALL,W,H-WALL);
   ctx.strokeStyle='rgba(0,0,0,0.10)';ctx.lineWidth=1;
-  for(let x=0;x<W;x+=46){ctx.beginPath();ctx.moveTo(x,WALL);ctx.lineTo(x,H);ctx.stroke()}
-  for(let y=WALL+30;y<H;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+  for(let x=Math.floor(vx/46)*46;x<vR;x+=46){ctx.beginPath();ctx.moveTo(x,WALL);ctx.lineTo(x,vB);ctx.stroke()}
+  for(let y=WALL+30;y<vB;y+=30){ctx.beginPath();ctx.moveTo(vx,y);ctx.lineTo(vR,y);ctx.stroke()}
   // warm light pools (v2 cozy)
   for(const[lx,ly]of[[197,360],[377,390],[103,210]]){
     const g2=ctx.createRadialGradient(lx,ly,8,lx,ly,90);
@@ -1291,6 +1292,7 @@ function step(ent,dt){
 }
 const ENTRY_BOTS=BOTS.map(b=>Object.assign({},b,{tx:b.x,ty:b.y}));
 ENTRY_BOTS.forEach((b,i)=>{if(i<3)b.conv='entry';});
+[{name:'Mara',skin:0,color:2,hat:'none',x:-72,y:330},{name:'Otis',skin:2,color:5,hat:'cap',x:678,y:300},{name:'Lou',skin:3,color:1,hat:'toque',species:'cat',x:-44,y:474},{name:'Pim',skin:1,color:3,hat:'none',x:656,y:476},{name:'Edie',skin:3,color:4,hat:'beret',x:716,y:188}].forEach(b=>ENTRY_BOTS.push(Object.assign({tx:b.x,ty:b.y,bot:true},b)));
 function loop(){
   requestAnimationFrame(loop);
   const t=performance.now(),dt=Math.min(0.05,(t-prev)/1000);prev=t;
