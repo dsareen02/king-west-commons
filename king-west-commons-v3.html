@@ -152,6 +152,7 @@
     #joinLeft{display:flex;flex-direction:column;align-items:center;justify-content:center}
     #joinRight{display:block}
     #avPrev{width:150px;height:177px}
+    #avStage{width:230px;height:300px}
     /* form rows left-align in the right column; preview/title still centered */
     #joinRight .row{justify-content:flex-start}
     #joinNote{text-align:left}
@@ -270,7 +271,12 @@
          At >=761px it becomes a 2-col grid: avatar LEFT, form RIGHT. -->
     <div id="joinBody">
       <div id="joinLeft">
-        <canvas id="avPrev" width="220" height="260"></canvas>
+        <div id="avStage">
+          <div id="av3dBubbleWrap"><div id="av3dBubble"></div><div id="av3dTail"></div></div>
+          <canvas id="av3d"></canvas>
+          <canvas id="avPrev" width="220" height="260"></canvas>
+          <div id="av3dTitle">Design your character</div>
+        </div>
       </div>
       <div id="joinRight">
         <input id="nameInput" placeholder="chat alias — just for the lounge" maxlength="14">
@@ -288,6 +294,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 'use strict';
 /* ================= CONFIG — paste your Supabase keys here to go LIVE ================= */
@@ -1356,7 +1363,7 @@ function buildJoin(){
       if(style==='sw'){b.className='sw'+(sel===i?' sel':'');b.style.background=v}
       else if(style==='sp'){b.className='hatBtn'+(sel===v?' sel':'');b.textContent=SPECIESLBL[v]}
       else{b.className='hatBtn'+(sel===v?' sel':'');b.textContent=HATLBL[v]}
-      b.onclick=()=>{fn(style==='sw'?i:v);buildJoin();drawPreview()};
+      b.onclick=()=>{fn(style==='sw'?i:v);buildJoin();drawPreview();if(window.kwc3dUpdate)window.kwc3dUpdate()};
       row.appendChild(b);
     });
   };
