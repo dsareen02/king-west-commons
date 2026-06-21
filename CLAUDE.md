@@ -1,38 +1,18 @@
-# King West Commons — app folder
+# king west commons app — CODE ONLY (no project context here)
 
-This folder is the **King West Commons** app, backed up to a private GitHub repo (`dsareen02/king-west-commons`).
+This folder is the **Netlify/iOS Lounge app** — deployable code only. It holds NO project
+knowledge, agents, or tasks.
 
-## App files
-- `king-west-commons-v3.html` — source of truth
-- `kwc-deploy/index.html`, `kwc-ios/www/index.html` — deploy copies (keep in sync; they differ ONLY in manifest delivery: deploy/ios use static `<link rel="manifest">` + apple-touch-icon, source uses the injected-blob-manifest IIFE)
+🔴 **The project brain lives at:** `~/Documents/KWC main project`
+Open Claude **there**, not here — it has the shared `CLAUDE.md`, the 3 agents, `TASKS.md`, and
+`PROJECT-SNAPSHOT.md`. From that session the engineer edits the files in this folder directly.
 
-## Version control is AUTOMATIC — you do nothing
-A background auto-save (macOS LaunchAgent `com.kwc.autosave`) commits and pushes every change in this folder to GitHub roughly every 90 seconds. **You do NOT need to run any git commands.** Just edit the files normally; every saved state is captured and recoverable on GitHub. Do not set up branches or ask Disha to manage folders.
+## What's here
+- `king-west-commons-v3.html` — source of truth for the Lounge.
+- `kwc-deploy/index.html`, `kwc-ios/www/index.html` — deploy copies (differ from the source ONLY in
+  manifest delivery; keep in sync otherwise).
 
-If you want to mark a meaningful milestone with a clear message you MAY run `git commit -am "message"` — but it's optional; the auto-save already protects everything.
-
-## Hard rules
-- NEVER deploy to Netlify (drag of `kwc-deploy/`) without Disha's explicit OK.
-- Disha is new to git/GitHub and must not be given any manual git/folder steps — keep all version-control work invisible to her.
-- `gh` CLI is already logged in on this Mac as `dsareen02`; git push/pull work without prompts.
-
-## 🔴 TRACKER HYGIENE — two rules, always
-- **Rule 1 — Capture EVERY task in `TASKS.md`** (docs repo): anything discussed (with Disha or
-  between agents) that is or implies a task, fix, idea, or follow-up gets written into `TASKS.md`;
-  nothing is ever left only in chat.
-- **Rule 2 — Mirror every task to the Google Sheet (Drive):** after any task is
-  discussed/added/changed/completed, it's logged in BOTH `TASKS.md` and the Drive Sheet, which must
-  always match (the Sheet never drifts behind). Details below.
-
-### Rule 2 details
-- Canonical tracker = the Google Sheet "King West Commons — Task Tracker"
-  (id `1nH08RJJDxaq2PSh-_UZrWPKvuAiyNhl92yZ0lFknXLM`, tab gid `1284780150`). `TASKS.md` in the
-  **docs repo** (`dsareen02/king-west-commons-docs`) is the working mirror.
-- Every task add/change/complete must end up in BOTH that Sheet and `TASKS.md` — the Sheet must
-  never drift behind. **Write to the Sheet directly via the Zapier Google Sheets actions**
-  (`execute_zapier_write_action`, `selected_api: GoogleSheetsV2CLIAPI` — `add_row` / `add_row_lines` /
-  `update_row`); the Zapier account has confirmed EDIT access (verified 2026-06-20). The plain Google
-  **Drive** connector canNOT edit sheets — use Zapier, not Drive. App/build tasks go on the
-  **Phase 1 — MVP** tab. Keep IDs identical across the Sheet and `TASKS.md`. Fallback only if the
-  Zapier write fails: a copy-paste-ready row block labelled "🔴 PASTE INTO DRIVE SHEET".
-- Full engineer conventions live in the docs repo's `CLAUDE.md`.
+## Shipping
+- Re-drag `kwc-deploy/` onto Netlify — **only with Disha's explicit OK.**
+- Version control is automatic (LaunchAgent `com.kwc.autosave`) — never run git by hand.
+- `gh` CLI is logged in as `dsareen02`.
