@@ -287,7 +287,7 @@
         <div class="row" id="skinRow"></div>
         <div class="row" id="colorRow"></div>
         <div class="row" id="hatRow"></div>
-        <button id="enterBtn">ENTER THE CAFÉ</button>
+        <button id="enterBtn">ENTER THE LOUNGE</button>
         <div id="anonNote">🕶️ Anonymous — pick a look and come chat with whoever's live right now.</div>
         <div id="joinNote">no real names here · your real name stays private in your Commons profile</div>
       </div>
@@ -1456,7 +1456,7 @@ $('enterBtn').onclick=async()=>{
   me.tagline=$('tagInput').value.trim();localStorage.setItem('kwc_tag',me.tagline);
   $('enterBtn').textContent='OPENING THE DOOR…';
   net=LIVE?new RealNet():new DemoNet();
-  try{await net.join()}catch(e){$('enterBtn').textContent='ENTER THE CAFÉ';return}
+  try{await net.join()}catch(e){$('enterBtn').textContent='ENTER THE LOUNGE';return}
   joined=true;$('join').style.display='none';
   setTimeout(fit,50);
   toast(LIVE?'you\'re live — everyone here is real':'demo room — these regulars are bots');
