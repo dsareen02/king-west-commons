@@ -95,8 +95,8 @@
   .newsItem .src{font-size:10px;color:#9c917f;margin-top:4px;letter-spacing:.06em}
   .note{background:#3a3122;border-left:4px solid var(--gold);border-radius:8px;padding:10px 12px;font-size:13px}
   .note .who{font-size:10px;color:#b5a88f;margin-top:4px}
-  #join{position:fixed;inset:0;z-index:20;background:radial-gradient(ellipse at 50% 30%,#33271a,#171310 75%);display:flex;align-items:center;justify-content:center;overflow-y:auto}
-  #joinCard{width:min(92vw,400px);text-align:center;padding:10px}
+  #join{position:fixed;inset:0;z-index:20;background:linear-gradient(rgba(14,10,7,.26),rgba(14,10,7,.46));-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;overflow-y:auto}
+  #joinCard{width:min(92vw,400px);text-align:center;padding:20px 18px;background:rgba(28,22,17,.62);border:1px solid rgba(255,196,106,.22);border-radius:20px;box-shadow:0 18px 50px rgba(0,0,0,.4)}
   #joinCard h1{font-size:21px;letter-spacing:.22em;color:var(--gold)}
   #joinCard .tag{font-size:10px;letter-spacing:.4em;color:#9c917f;margin:6px 0 14px}
   #avPrev{width:100px;height:118px;margin:0 auto}
@@ -1285,12 +1285,15 @@ function step(ent,dt){
   const dx=ent.tx-ent.x,dy=ent.ty-ent.y,d=Math.hypot(dx,dy);
   if(d>2){const sp=130*dt;const k=Math.min(1,sp/d);ent.x+=dx*k;ent.y+=dy*k}
 }
+const ENTRY_BOTS=BOTS.map(b=>Object.assign({},b,{tx:b.x,ty:b.y}));
+ENTRY_BOTS.forEach((b,i)=>{if(i<3)b.conv='entry';});
 function loop(){
   requestAnimationFrame(loop);
   const t=performance.now(),dt=Math.min(0.05,(t-prev)/1000);prev=t;
   if(joined)step(me,dt);   // advance camera focus before we read me.x/me.y
   updateCamera();
   drawRoom(t);drawFurniture();
+  if(!joined){for(const p of [...ENTRY_BOTS].sort((a,b)=>a.y-b.y))drawAvatar(p,t);}
   if(joined){
     for(const p of players.values())step(p,dt);
     const all=[...players.values(),me].sort((a,b)=>a.y-b.y);
