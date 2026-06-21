@@ -238,6 +238,7 @@
 </div>
 <div class="sheet" id="outfitSheet">
   <h3>👕 YOUR LOOK<button class="x" data-close="outfitSheet">✕</button></h3>
+  <div class="row" id="outfitSpecies"></div>
   <div class="row" id="outfitColors"></div>
   <div class="row" id="outfitHats"></div>
 </div>
@@ -268,6 +269,7 @@
       <div id="joinRight">
         <input id="nameInput" placeholder="chat alias — just for the lounge" maxlength="14">
         <input id="tagInput" placeholder="your tagline — e.g. King &amp; Peter · espresso person" maxlength="42" style="width:100%;background:#241e18;border:1px solid #4a3f31;color:var(--cream);border-radius:12px;padding:12px;font-size:13px;text-align:center;outline:none;margin:0 0 10px">
+        <div class="row" id="speciesRow"></div>
         <div class="row" id="skinRow"></div>
         <div class="row" id="colorRow"></div>
         <div class="row" id="hatRow"></div>
@@ -333,12 +335,15 @@ const SKINS=['#c9a17e','#8d5a3b','#5d3a23','#e8c39a'];
 const COLORS=['#c8412e','#2e6f8f','#5a8f4e','#8a5fb0','#d49a2a','#444b57'];
 const HATS=['none','toque','cap','beret'];
 const HATLBL={none:'no hat',toque:'toque 🍁',cap:'cap',beret:'beret'};
+const SPECIES=['human','cat','dog','panda','fox','bear'];
+const SPECIESLBL={human:'🙂 person',cat:'🐱 cat',dog:'🐶 dog',panda:'🐼 panda',fox:'🦊 fox',bear:'🐻 bear'};
 let me={
   id:localStorage.getItem('kwc_id')||('p'+Math.random().toString(36).slice(2,10)),
   name:localStorage.getItem('kwc_name')||'',
   skin:+(localStorage.getItem('kwc_skin')||0),
   color:+(localStorage.getItem('kwc_color')||0),
   hat:localStorage.getItem('kwc_hat')||'none',
+  species:localStorage.getItem('kwc_species')||'human',
   tagline:localStorage.getItem('kwc_tag')||'',
   x:300,y:470,tx:300,ty:470,holding:null,conv:null,emote:null,emoteT:0,bubble:null,bubbleT:0
 };
@@ -575,6 +580,61 @@ function drawVignette(){
 
 /* ---------- avatars ---------- */
 const players=new Map();
+/* non-human personas (E14): species-specific heads, drawn at head centre (hx,hy).
+   Unknown/missing species -> human, so legacy network profiles + bots still render. */
+function drawCreatureHead(sp,hx,hy,skin){
+  const eye=(dx,dy,r)=>{ctx.beginPath();ctx.arc(hx+dx,hy+dy,r||1.3,0,7);ctx.fill()};
+  const tri=(ax,ay,bx,by,cx,cy)=>{ctx.beginPath();ctx.moveTo(hx+ax,hy+ay);ctx.lineTo(hx+bx,hy+by);ctx.lineTo(hx+cx,hy+cy);ctx.closePath();ctx.fill()};
+  if(sp==='cat'){
+    const fur='#d98e3a';
+    ctx.fillStyle=fur;tri(-8,-7,-10,-15,-3,-9);tri(8,-7,10,-15,3,-9);
+    ctx.fillStyle='#f3c6a0';tri(-8,-8,-9,-13,-5,-9);tri(8,-8,9,-13,5,-9);
+    ctx.fillStyle=fur;ctx.beginPath();ctx.arc(hx,hy,9.5,0,7);ctx.fill();
+    ctx.fillStyle='#241a14';eye(-3.5,-1);eye(3.5,-1);
+    ctx.fillStyle='#c0566a';tri(0,3,-1.6,1.5,1.6,1.5);
+    ctx.strokeStyle='rgba(36,26,20,0.5)';ctx.lineWidth=0.6;ctx.beginPath();
+    ctx.moveTo(hx-2,hy+3);ctx.lineTo(hx-9,hy+2);ctx.moveTo(hx-2,hy+4);ctx.lineTo(hx-9,hy+5);
+    ctx.moveTo(hx+2,hy+3);ctx.lineTo(hx+9,hy+2);ctx.moveTo(hx+2,hy+4);ctx.lineTo(hx+9,hy+5);ctx.stroke();
+  }else if(sp==='dog'){
+    ctx.fillStyle='#8a5a2c';ctx.beginPath();ctx.ellipse(hx-9,hy-1,3.5,7,0.25,0,7);ctx.fill();
+    ctx.beginPath();ctx.ellipse(hx+9,hy-1,3.5,7,-0.25,0,7);ctx.fill();
+    ctx.fillStyle='#a9763f';ctx.beginPath();ctx.arc(hx,hy,9.5,0,7);ctx.fill();
+    ctx.fillStyle='#e3c79c';ctx.beginPath();ctx.ellipse(hx,hy+4,5,4,0,0,7);ctx.fill();
+    ctx.fillStyle='#241a14';eye(-3.5,-2);eye(3.5,-2);
+    ctx.beginPath();ctx.arc(hx,hy+2.5,1.8,0,7);ctx.fill();
+  }else if(sp==='panda'){
+    ctx.fillStyle='#242424';ctx.beginPath();ctx.arc(hx-7,hy-8,3.4,0,7);ctx.fill();
+    ctx.beginPath();ctx.arc(hx+7,hy-8,3.4,0,7);ctx.fill();
+    ctx.fillStyle='#f4f1ec';ctx.beginPath();ctx.arc(hx,hy,9.5,0,7);ctx.fill();
+    ctx.fillStyle='#242424';ctx.beginPath();ctx.ellipse(hx-4,hy-1,2.6,3.4,0.4,0,7);ctx.fill();
+    ctx.beginPath();ctx.ellipse(hx+4,hy-1,2.6,3.4,-0.4,0,7);ctx.fill();
+    ctx.fillStyle='#fff';eye(-4,-1,1);eye(4,-1,1);
+    ctx.fillStyle='#242424';ctx.beginPath();ctx.arc(hx,hy+3,1.4,0,7);ctx.fill();
+  }else if(sp==='fox'){
+    const fur='#d9663a';
+    ctx.fillStyle=fur;tri(-8,-6,-10,-15,-2,-9);tri(8,-6,10,-15,2,-9);
+    ctx.fillStyle='#2a2a2a';tri(-9,-12,-10,-15,-6.5,-12.5);tri(9,-12,10,-15,6.5,-12.5);
+    ctx.fillStyle=fur;ctx.beginPath();ctx.arc(hx,hy,9.5,0,7);ctx.fill();
+    ctx.fillStyle='#f4ece1';tri(-6,1,6,1,0,8);
+    ctx.fillStyle='#241a14';eye(-3.5,-1);eye(3.5,-1);
+    ctx.fillStyle='#2a2a2a';ctx.beginPath();ctx.arc(hx,hy+5,1.4,0,7);ctx.fill();
+  }else if(sp==='bear'){
+    const fur='#8a6240';
+    ctx.fillStyle=fur;ctx.beginPath();ctx.arc(hx-7,hy-8,3.3,0,7);ctx.fill();
+    ctx.beginPath();ctx.arc(hx+7,hy-8,3.3,0,7);ctx.fill();
+    ctx.fillStyle='#6b4a2e';ctx.beginPath();ctx.arc(hx-7,hy-8,1.5,0,7);ctx.fill();
+    ctx.beginPath();ctx.arc(hx+7,hy-8,1.5,0,7);ctx.fill();
+    ctx.fillStyle=fur;ctx.beginPath();ctx.arc(hx,hy,9.5,0,7);ctx.fill();
+    ctx.fillStyle='#cda878';ctx.beginPath();ctx.ellipse(hx,hy+3.5,4.5,3.5,0,0,7);ctx.fill();
+    ctx.fillStyle='#241a14';eye(-3.5,-2);eye(3.5,-2);
+    ctx.beginPath();ctx.arc(hx,hy+2,1.5,0,7);ctx.fill();
+  }else{ // human
+    ctx.fillStyle=skin;ctx.beginPath();ctx.arc(hx,hy,9.5,0,7);ctx.fill();
+    ctx.fillStyle='#241a14';eye(-3,-1,1.2);eye(3,-1,1.2);
+    ctx.strokeStyle='#241a14';ctx.lineWidth=1.2;
+    ctx.beginPath();ctx.arc(hx,hy+2,3,0.25*Math.PI,0.75*Math.PI);ctx.stroke();
+  }
+}
 function drawAvatar(p,t){
   const x=p.x,y=p.y,sk=SKINS[p.skin%4],col=COLORS[p.color%6];
   const moving=Math.hypot(p.tx-p.x,p.ty-p.y)>2;
@@ -585,12 +645,7 @@ function drawAvatar(p,t){
   ctx.beginPath();ctx.moveTo(x-4,y-12);ctx.lineTo(x-4+lp*0.5,y);ctx.stroke();
   ctx.beginPath();ctx.moveTo(x+4,y-12);ctx.lineTo(x+4-lp*0.5,y);ctx.stroke();
   ctx.fillStyle=col;rr(x-9,y-30+bob,18,20,8);ctx.fill();
-  ctx.fillStyle=sk;ctx.beginPath();ctx.arc(x,y-38+bob,9.5,0,7);ctx.fill();
-  ctx.fillStyle='#241a14';
-  ctx.beginPath();ctx.arc(x-3,y-39+bob,1.2,0,7);ctx.fill();
-  ctx.beginPath();ctx.arc(x+3,y-39+bob,1.2,0,7);ctx.fill();
-  ctx.strokeStyle='#241a14';ctx.lineWidth=1.2;
-  ctx.beginPath();ctx.arc(x,y-36+bob,3,0.25*Math.PI,0.75*Math.PI);ctx.stroke();
+  drawCreatureHead(p.species||'human',x,y-38+bob,sk);
   if(p.hat==='toque'){ctx.fillStyle='#d9544a';rr(x-9,y-50+bob,18,8,4);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,y-52+bob,3,0,7);ctx.fill()}
   else if(p.hat==='cap'){ctx.fillStyle='#2e3f55';rr(x-9,y-48+bob,18,6,3);ctx.fill();ctx.fillRect(x-13,y-44+bob,9,3)}
   else if(p.hat==='beret'){ctx.fillStyle='#5a3a66';ctx.beginPath();ctx.ellipse(x-1,y-47+bob,10,4.5,-0.2,0,7);ctx.fill()}
@@ -754,13 +809,13 @@ $('btnMusic').onclick=e=>{
 /* ---------- networking ---------- */
 const LIVE=!!(CONFIG.SUPABASE_URL&&CONFIG.SUPABASE_ANON_KEY);
 let net=null,joined=false;
-function makeProfile(){return{name:me.name,skin:me.skin,color:me.color,hat:me.hat,tagline:me.tagline,x:me.x|0,y:me.y|0,holding:me.holding,conv:me.conv}}
+function makeProfile(){return{name:me.name,skin:me.skin,color:me.color,hat:me.hat,species:me.species,tagline:me.tagline,x:me.x|0,y:me.y|0,holding:me.holding,conv:me.conv}}
 function upsert(id,data){
   if(id===me.id)return;
   let p=players.get(id);
   if(!p){p={id,x:data.x||300,y:data.y||440,tx:data.x||300,ty:data.y||440,bubble:null,emote:null,emoteT:0,bubbleT:0};players.set(id,p);
     if(joined)toast(`${data.name} walked in`)}
-  Object.assign(p,{name:data.name,skin:data.skin,color:data.color,hat:data.hat,tagline:data.tagline,blurb:data.blurb,holding:data.holding,conv:data.conv,bot:data.bot});
+  Object.assign(p,{name:data.name,skin:data.skin,color:data.color,hat:data.hat,species:data.species,tagline:data.tagline,blurb:data.blurb,holding:data.holding,conv:data.conv,bot:data.bot});
   if(data.x!=null&&!p.seeded){p.x=data.x;p.y=data.y;p.tx=data.x;p.ty=data.y;p.seeded=true}
 }
 function refreshCount(){$('online').textContent=players.size+1}
@@ -821,7 +876,7 @@ class RealNet{
 const BOTS=[
  {id:'b1',name:'Rui ☕',skin:1,color:4,hat:'cap',x:430,y:230,bot:true,home:[430,230],blurb:'King & Spadina · pulls the best shot on the strip',
   lines:["welcome to the commons! first one's on the house ☕","i pull the best shot on king west, fight me","you new here? love the energy","the 504 just went by, right on time"]},
- {id:'b2',name:'Casey 🐕',skin:0,color:1,hat:'toque',x:150,y:300,bot:true,home:[150,300],blurb:"King & Bathurst · Biscuit's human",
+ {id:'b2',name:'Casey 🐕',skin:0,color:1,hat:'toque',species:'dog',x:150,y:300,bot:true,home:[150,300],blurb:"King & Bathurst · Biscuit's human",
   lines:["this is Biscuit. yes he's a good boy","doing a dog walk at 7 by the water — wanna come?","Biscuit made three friends today. i made zero lol","check the board, i posted the walk 🐾"]},
  {id:'b3',name:'Sam',skin:2,color:3,hat:'none',x:350,y:250,bot:true,home:[350,250],blurb:'King & Brant · reads AI news for fun',
   lines:["did you see the wire?? wild week in AI","i refresh that news board like it's a slot machine","ok but which model do you actually use daily","benchmarks are fake, vibes are real"]},
@@ -1003,7 +1058,9 @@ $('noteBtn').onclick=()=>{
   if(/dog|walk|🐕|🐾/i.test(t))addPts(3,'dog walks count double 🐕');
 };
 function buildOutfitSheet(){
-  $('outfitColors').innerHTML='';$('outfitHats').innerHTML='';
+  $('outfitSpecies').innerHTML='';$('outfitColors').innerHTML='';$('outfitHats').innerHTML='';
+  SPECIES.forEach(s=>{const b=document.createElement('button');b.className='hatBtn'+(me.species===s?' sel':'');b.textContent=SPECIESLBL[s];
+    b.onclick=()=>{me.species=s;localStorage.setItem('kwc_species',s);net.sync();buildOutfitSheet()};$('outfitSpecies').appendChild(b)});
   COLORS.forEach((c,i)=>{const b=document.createElement('button');b.className='sw'+(me.color===i?' sel':'');b.style.background=c;
     b.onclick=()=>{me.color=i;localStorage.setItem('kwc_color',i);net.sync();buildOutfitSheet()};$('outfitColors').appendChild(b)});
   HATS.forEach(h=>{const b=document.createElement('button');b.className='hatBtn'+(me.hat===h?' sel':'');b.textContent=HATLBL[h];
@@ -1262,7 +1319,7 @@ function drawPreview(){
   const ni=$('nameInput'),ti=$('tagInput');
   const liveName=(ni&&ni.value.trim())||me.name||'you';
   const liveTag=(ti?ti.value.trim():'')||me.tagline||'';
-  const fake={x:0,y:50,tx:0,ty:50,name:liveName,skin:me.skin,color:me.color,hat:me.hat,holding:'coke',id:'x'};
+  const fake={x:0,y:50,tx:0,ty:50,name:liveName,skin:me.skin,color:me.color,hat:me.hat,species:me.species,holding:'coke',id:'x'};
   const old=ctx;ctx=pctx;
   try{drawAvatar(fake,performance.now())}finally{ctx=old}
   // tagline line under the avatar, café style (only on the setup preview)
@@ -1282,12 +1339,15 @@ function buildJoin(){
     arr.forEach((v,i)=>{
       const b=document.createElement('button');
       if(style==='sw'){b.className='sw'+(sel===i?' sel':'');b.style.background=v}
+      else if(style==='sp'){b.className='hatBtn'+(sel===v?' sel':'');b.textContent=SPECIESLBL[v]}
       else{b.className='hatBtn'+(sel===v?' sel':'');b.textContent=HATLBL[v]}
       b.onclick=()=>{fn(style==='sw'?i:v);buildJoin();drawPreview()};
       row.appendChild(b);
     });
   };
+  mk($('speciesRow'),SPECIES,me.species,v=>{me.species=v;localStorage.setItem('kwc_species',v)},'sp');
   mk($('skinRow'),SKINS,me.skin,v=>{me.skin=v;localStorage.setItem('kwc_skin',v)},'sw');
+  $('skinRow').style.display=me.species==='human'?'':'none';
   mk($('colorRow'),COLORS,me.color,v=>{me.color=v;localStorage.setItem('kwc_color',v)},'sw');
   mk($('hatRow'),HATS,me.hat,v=>{me.hat=v;localStorage.setItem('kwc_hat',v)},'hat');
   drawPreview();
