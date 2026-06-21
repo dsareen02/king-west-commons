@@ -1387,7 +1387,7 @@ setInterval(()=>{if(!joined)drawPreview()},400);
         prev=document.getElementById('avPrev'),wrap=document.getElementById('av3dBubbleWrap'),
         bub=document.getElementById('av3dBubble');
   const FUR={cat:'#d98e3a',dog:'#a9763f',panda:'#f4f1ec',fox:'#d9663a',bear:'#8a6240'};
-  const LINES=['I am anonymous here',"I'm excitedddd!"];
+  const LINES=['I am anonymous here','Come say hi 👋','Just here to chat'];
   function fallback(){cv.style.display='none';prev.style.display='block';prev.style.width='150px';prev.style.height='177px';wrap.style.opacity='0';}
   if(!window.THREE){fallback();return;}
   let renderer;
@@ -1395,7 +1395,7 @@ setInterval(()=>{if(!joined)drawPreview()},400);
   catch(e){fallback();return;}
   renderer.setClearColor(0x000000,0);
   const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(32,1,0.1,100);
-  camera.position.set(0,3.4,10.6);camera.lookAt(0,3.0,0);
+  camera.position.set(0,3.4,12.2);camera.lookAt(0,2.65,0);
   scene.add(new THREE.HemisphereLight(0xfff3e0,0x281d14,0.85));
   const kl=new THREE.DirectionalLight(0xfff0d6,0.9);kl.position.set(4,8,6);scene.add(kl);
   const rl=new THREE.DirectionalLight(0xffc46a,0.35);rl.position.set(-5,3,-4);scene.add(rl);
