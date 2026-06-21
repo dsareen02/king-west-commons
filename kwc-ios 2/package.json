@@ -1,0 +1,17 @@
+{
+  "name": "king-west-commons",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "ios": "npx cap add ios",
+    "open": "npx cap open ios",
+    "sync": "npx cap sync ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/ios": "^6.0.0"
+  }
+}

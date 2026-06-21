@@ -4,18 +4,56 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>King West Commons — The Café v2</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="KW Commons">
+<meta name="theme-color" content="#171310">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="%23171310"/><text x="50" y="64" font-size="44" text-anchor="middle" fill="%23ffc46a" font-family="Georgia">KW</text></svg>'>
+<title>King West Commons — v3</title>
 <style>
   :root{--gold:#ffc46a;--ink:#171310;--cream:#f3ead9;--red:#c8412e}
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{width:100%;height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 20%,#2a2118,#14100c 80%);font-family:"Avenir Next","Segoe UI",system-ui,sans-serif;color:var(--cream);
     -webkit-user-select:none;user-select:none;touch-action:manipulation}
-  #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  /* ---------- v3 app shell: views + bottom tabs ---------- */
+  #app{display:flex;flex-direction:column;height:100%}
+  #views{flex:1;position:relative;overflow:hidden}
+  .view{position:absolute;inset:0;display:none;flex-direction:column}
+  .view.active{display:flex}
+  #stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  #tabbar{display:flex;background:rgba(18,15,12,.97);border-top:1px solid #332a21;padding:6px 4px calc(6px + env(safe-area-inset-bottom));backdrop-filter:blur(12px)}
+  .tab{flex:1;background:none;border:none;color:#9c917f;font-size:10.5px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 0;transition:color .15s}
+  .tab svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .tab.on{color:var(--gold)}
+  .vhead{display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;border-bottom:1px solid #332a21}
+  .vhead h2{font-size:16px;font-weight:600}
+  .vhead a{color:var(--gold);font-size:13px;text-decoration:none;font-weight:600;padding:6px 12px;border:1px solid #332a21;border-radius:99px}
+  .frameWrap{flex:1;position:relative;background:#171310;overflow:hidden}
+  .frameWrap iframe{position:absolute;left:0;width:100%;border:0;top:calc(-1 * var(--crop,0px));height:calc(100% + var(--crop,0px));background:#fff}
+  /* settings overlay */
+  #settings{position:fixed;inset:0;z-index:30;background:var(--ink);display:none;flex-direction:column}
+  #settings.open{display:flex}
+  .setHead{display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 14px 10px;border-bottom:1px solid #332a21}
+  .setHead button{background:none;border:none;color:var(--gold);font-size:26px;line-height:1;padding:0 6px}
+  .setHead h2{font-size:16px;font-weight:600}
+  .setList{flex:1;overflow-y:auto;padding:14px}
+  .setSec{font-size:11px;letter-spacing:.18em;color:#9c917f;margin:14px 4px 8px}
+  .setItem{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#241e18;border:1px solid #332a21;border-radius:14px;padding:14px;margin-bottom:8px;font-size:14px;color:var(--cream);width:100%;text-align:left}
+  .setItem b{font-weight:600}
+  .setItem span{color:#9c917f;font-size:12px;text-align:right}
+  #aliasRow{display:none;gap:8px;margin-bottom:8px}
+  #aliasRow input{flex:1;background:#171310;border:1px solid #4a3f31;color:var(--cream);border-radius:12px;padding:11px 13px;font-size:15px;outline:none;min-width:0}
+  .frameNote{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#171310;text-align:center;padding:32px;z-index:1}
+  .frameNote p{color:#9c917f;font-size:14px;line-height:1.5;max-width:280px}
+  .frameNote .big{font-size:34px}
+  .btnA{background:var(--gold);color:#241a06;font-weight:700;font-size:14px;padding:13px 24px;border-radius:99px;text-decoration:none}
   canvas{display:block}
-  #hud{position:fixed;top:0;left:0;right:0;z-index:5;display:flex;justify-content:space-between;align-items:flex-start;padding:max(10px,env(safe-area-inset-top)) 12px 0;pointer-events:none}
+  #hud{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;justify-content:space-between;align-items:flex-start;padding:max(10px,env(safe-area-inset-top)) 12px 0;pointer-events:none}
   .chip{background:rgba(23,19,16,.78);border:1px solid rgba(255,196,106,.3);border-radius:20px;padding:6px 13px;font-size:12px;backdrop-filter:blur(6px)}
   #roomChip b{color:var(--gold);letter-spacing:.08em}
-  #bar{position:fixed;bottom:0;left:0;right:0;z-index:5;display:flex;gap:7px;justify-content:center;padding:10px 10px max(12px,env(safe-area-inset-bottom))}
+  #bar{position:absolute;bottom:0;left:0;right:0;z-index:5;display:flex;gap:7px;justify-content:center;padding:10px 10px 12px}
   .barBtn{pointer-events:auto;background:rgba(23,19,16,.85);border:1px solid rgba(255,196,106,.35);color:var(--cream);border-radius:14px;padding:10px 12px;font-size:13px;font-weight:600;backdrop-filter:blur(6px)}
   .barBtn:active{transform:scale(.95)}
   .barBtn.on{border-color:var(--gold);color:var(--gold)}
@@ -26,7 +64,7 @@
   .sheet h3{font-size:15px;color:var(--gold);letter-spacing:.06em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
   .x{background:none;border:none;color:#9c917f;font-size:22px;padding:0 4px}
   /* v2: docked mini chat panel — room stays visible */
-  #chatDock{position:fixed;right:8px;bottom:calc(64px + env(safe-area-inset-bottom));z-index:9;width:min(66vw,300px);
+  #chatDock{position:fixed;right:8px;bottom:calc(136px + env(safe-area-inset-bottom));z-index:9;width:min(66vw,300px);
     background:rgba(30,24,18,.93);border:1px solid rgba(255,196,106,.45);border-radius:16px;backdrop-filter:blur(8px);
     display:flex;flex-direction:column;max-height:44vh;transform:translateX(115%);transition:transform .25s ease}
   #chatDock.open{transform:translateX(0)}
@@ -44,7 +82,7 @@
   #chatInput{flex:1;background:#171310;border:1px solid #4a3f31;color:var(--cream);border-radius:10px;padding:9px 11px;font-size:14px;outline:none;min-width:0}
   .send{background:var(--gold);border:none;color:#241a06;font-weight:700;border-radius:10px;padding:0 14px;font-size:13px}
   /* collapsed pill */
-  #chatPill{position:fixed;right:8px;bottom:calc(64px + env(safe-area-inset-bottom));z-index:9;display:none;
+  #chatPill{position:fixed;right:8px;bottom:calc(136px + env(safe-area-inset-bottom));z-index:9;display:none;
     background:rgba(30,24,18,.95);border:1px solid var(--gold);border-radius:20px;padding:9px 14px;font-size:12px;color:var(--gold);font-weight:700}
   #actMenu{position:fixed;z-index:11;background:#241e18;border:1px solid rgba(255,196,106,.4);border-radius:14px;overflow:hidden;display:none;min-width:180px;max-width:78vw}
   #actMenu .head{padding:11px 14px;font-size:12px;color:var(--gold);font-weight:700;border-bottom:1px solid #332a21;line-height:1.4}
@@ -69,7 +107,15 @@
   .hatBtn.sel{border-color:var(--gold);color:var(--gold)}
   #enterBtn{width:100%;margin-top:6px;background:linear-gradient(90deg,#ffc46a,#ff9d3c);border:none;border-radius:13px;padding:15px;font-size:15px;font-weight:800;letter-spacing:.15em;color:#241a06}
   #joinNote{font-size:11px;color:#9c917f;margin-top:10px;line-height:1.6}
-  #demoBadge{display:none;position:fixed;top:max(54px,calc(env(safe-area-inset-top) + 44px));left:50%;transform:translateX(-50%);z-index:5;font-size:10px;letter-spacing:.1em;color:#ffb1a3;background:rgba(80,25,18,.8);border-radius:12px;padding:4px 12px;white-space:nowrap}
+  /* person card (v3 — slide-up like the shared design) */
+  #psTag{color:#9c917f;font-size:13px;margin:-4px 0 6px}
+  #psTalk{display:none;background:#1c1712;border:1px solid #332a21;border-radius:12px;padding:10px 12px;font-size:13px;color:var(--gold);margin:6px 0 4px;line-height:1.45}
+  .rowBtns{display:flex;gap:10px;margin-top:14px}
+  .rowBtns button{flex:1;padding:14px;font-size:14.5px;font-weight:700;border-radius:99px}
+  .bPrimary{background:var(--gold);color:#241a06;border:none}
+  .bGhost{background:transparent;color:var(--gold);border:1.5px solid var(--gold)}
+  .bWide{width:100%;margin-top:10px;padding:13px;border-radius:99px;background:#332a21;border:none;color:var(--cream);font-weight:600;font-size:14px}
+  #demoBadge{display:none;position:absolute;top:max(54px,calc(env(safe-area-inset-top) + 44px));left:50%;transform:translateX(-50%);z-index:5;font-size:10px;letter-spacing:.1em;color:#ffb1a3;background:rgba(80,25,18,.8);border-radius:12px;padding:4px 12px;white-space:nowrap}
   #toastC{position:fixed;top:16%;left:50%;transform:translateX(-50%);z-index:12;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:max-content;max-width:92vw}
   .toastMsg{background:rgba(23,19,16,.92);border:1px solid rgba(255,196,106,.45);border-radius:12px;padding:9px 16px;font-size:13px;animation:tIn .3s,tOut .4s 3.6s forwards;max-width:92vw}
   @keyframes tIn{from{opacity:0;transform:translateY(-8px)}}
@@ -77,17 +123,80 @@
 </style>
 </head>
 <body>
-<div id="stage"><canvas id="cv"></canvas></div>
-<div id="hud">
-  <div class="chip" id="roomChip"><b>KING WEST COMMONS</b> · <span id="online">1</span> here</div>
-  <div class="chip" id="ptsChip">⭐ <span id="pts">0</span></div>
+<div id="app">
+  <div id="views">
+    <!-- LOUNGE -->
+    <div class="view active" id="view-room">
+      <div id="stage"><canvas id="cv"></canvas></div>
+      <div id="hud">
+        <div class="chip" id="roomChip"><b>KING WEST COMMONS</b> · <span id="online">1</span> here</div>
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <div class="chip" id="ptsChip">⭐ <span id="pts">0</span></div>
+          <button class="chip" id="btnMenu" style="pointer-events:auto;color:var(--gold);font-size:15px;line-height:1.2">☰</button>
+        </div>
+      </div>
+      <div id="demoBadge">DEMO ROOM · regulars are bots — add keys to go live</div>
+      <div id="bar">
+        <button class="barBtn" id="btnMusic">🎵</button>
+        <button class="barBtn" id="btnOutfit">👕</button>
+        <button class="barBtn" id="btnNews">📰 AI Wire</button>
+        <button class="barBtn" id="btnBoard">📌 Board</button>
+      </div>
+    </div>
+    <!-- THE COMMONS -->
+    <div class="view" id="view-commons">
+      <div class="vhead"><h2>The Commons</h2></div>
+      <div class="frameWrap" id="fwCommons"></div>
+    </div>
+    <!-- PASS ALONG -->
+    <div class="view" id="view-passalong">
+      <div class="vhead"><h2>Pass Along</h2></div>
+      <div class="frameWrap" id="fwPassalong"></div>
+    </div>
+    <!-- DIRECTORY -->
+    <div class="view" id="view-directory">
+      <div class="vhead"><h2>Directory</h2></div>
+      <div class="frameWrap" id="fwDirectory"></div>
+    </div>
+    <!-- PROFILE -->
+    <div class="view" id="view-profile">
+      <div class="vhead"><h2>Profile</h2></div>
+      <div class="frameWrap" id="fwProfile"></div>
+    </div>
+  </div>
+  <nav id="tabbar">
+    <button class="tab on" data-v="room">
+      <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>
+      Lounge</button>
+    <button class="tab" data-v="commons">
+      <svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.6 8.6 0 0 1-3.5-.7L3 21l1.8-4.5A8.4 8.4 0 1 1 21 11.5z"/></svg>
+      The Commons</button>
+    <button class="tab" data-v="passalong">
+      <svg viewBox="0 0 24 24"><path d="M20 7h-9a4 4 0 1 0 0 8h2"/><path d="M17 4l3 3-3 3"/><path d="M4 17h9a4 4 0 1 0 0-8h-2"/><path d="M7 20l-3-3 3-3"/></svg>
+      Pass Along</button>
+    <button class="tab" data-v="directory">
+      <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.4 3.4-5 6.5-5s5.7 1.6 6.5 5"/><circle cx="17.5" cy="9" r="2.7"/><path d="M16.5 14.6c2.6.3 4.4 1.8 5 4.4"/></svg>
+      Directory</button>
+    <button class="tab" data-v="profile">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c1-4 4-6 7.5-6s6.5 2 7.5 6"/></svg>
+      Profile</button>
+  </nav>
 </div>
-<div id="demoBadge">DEMO ROOM · regulars are bots — add keys to go live</div>
-<div id="bar">
-  <button class="barBtn" id="btnMusic">🎵</button>
-  <button class="barBtn" id="btnOutfit">👕</button>
-  <button class="barBtn" id="btnNews">📰 AI Wire</button>
-  <button class="barBtn" id="btnBoard">📌 Board</button>
+<!-- v3: settings (hamburger) -->
+<div id="settings">
+  <div class="setHead"><button id="setBack">‹</button><h2 id="setTitle">Settings</h2></div>
+  <div class="setList" id="setList">
+    <div class="setSec">THE LOUNGE</div>
+    <button class="setItem" id="siAlias"><b>Chat alias</b><span id="aliasNow"></span></button>
+    <div id="aliasRow"><input id="aliasInput" maxlength="14" placeholder="new alias"><button class="send" id="aliasSave">Save</button></div>
+    <button class="setItem" id="siOutfit"><b>Outfit</b><span>change your look</span></button>
+    <button class="setItem" id="siMusic"><b>Music</b><span id="musicNow">off</span></button>
+    <div class="setSec">YOUR COMMONS ACCOUNT</div>
+    <button class="setItem" data-bm="PROFILE_URL"><b>Profile</b><span>your real name lives here</span></button>
+    <button class="setItem" data-bm="ACCOUNT_URL"><b>Account</b><span>email · password</span></button>
+    <button class="setItem" data-bm="NOTIF_URL"><b>Notifications</b><span>what pings you</span></button>
+  </div>
+  <div id="setFrame" class="frameWrap" style="display:none"></div>
 </div>
 <div id="toastC"></div>
 
@@ -121,6 +230,17 @@
   <div class="row" id="outfitColors"></div>
   <div class="row" id="outfitHats"></div>
 </div>
+<!-- v3 person card -->
+<div class="sheet" id="personSheet">
+  <h3><span id="psName">—</span><button class="x" data-close="personSheet">✕</button></h3>
+  <div id="psTag"></div>
+  <div id="psTalk"></div>
+  <div class="rowBtns">
+    <button class="bGhost" id="psWave">👋 Wave</button>
+    <button class="bPrimary" id="psPrimary">💬 Message</button>
+  </div>
+  <button class="bWide" id="psGift" style="display:none"></button>
+</div>
 <div id="actMenu"></div>
 
 <div id="join">
@@ -128,12 +248,13 @@
     <h1>KING WEST COMMONS</h1>
     <div class="tag">THE CAFÉ · v2 · COME HANG OUT</div>
     <canvas id="avPrev" width="220" height="260"></canvas>
-    <input id="nameInput" placeholder="your name" maxlength="14">
+    <input id="nameInput" placeholder="chat alias — just for the lounge" maxlength="14">
+    <input id="tagInput" placeholder="your tagline — e.g. King &amp; Peter · espresso person" maxlength="42" style="width:100%;background:#241e18;border:1px solid #4a3f31;color:var(--cream);border-radius:12px;padding:12px;font-size:13px;text-align:center;outline:none;margin:0 0 10px">
     <div class="row" id="skinRow"></div>
     <div class="row" id="colorRow"></div>
     <div class="row" id="hatRow"></div>
     <button id="enterBtn">ENTER THE CAFÉ</button>
-    <div id="joinNote">tap the floor to walk · tap a head to talk · tap a circle to join the conversation<br>grab a drink from the red fridge · 🎵 sets the room's vibe</div>
+    <div id="joinNote">tap the floor to walk · tap a head to talk · tap a circle to join the conversation<br>grab a drink from the red fridge · 🎵 sets the room's vibe<br><br>your real name lives in your Commons profile — the alias is just for the room, and you can change it every visit</div>
   </div>
 </div>
 
@@ -145,7 +266,15 @@ const CONFIG={
   SUPABASE_URL:'',
   SUPABASE_ANON_KEY:'',
   ROOM:'commons-cafe-1',
-  CAP:12
+  CAP:12,
+  /* Bettermode pages for the tabs (embedded in-app) */
+  COMMONS_URL:'https://www.kingwestcommons.ca/asks-pyklns0v',
+  PASSALONG_URL:'https://www.kingwestcommons.ca/buy-sell-k2r2e4a1',
+  DIRECTORY_URL:'https://www.kingwestcommons.ca/directory-x049uph4',
+  PROFILE_URL:'https://www.kingwestcommons.ca/settings/profile',
+  ACCOUNT_URL:'https://www.kingwestcommons.ca/settings/account',
+  NOTIF_URL:'https://www.kingwestcommons.ca/settings/notifications',
+  HEADER_CROP:64   // px of the Bettermode top bar hidden inside embeds — tune to taste
 };
 /* ===================================================================================== */
 
@@ -159,6 +288,7 @@ let me={
   skin:+(localStorage.getItem('kwc_skin')||0),
   color:+(localStorage.getItem('kwc_color')||0),
   hat:localStorage.getItem('kwc_hat')||'none',
+  tagline:localStorage.getItem('kwc_tag')||'',
   x:300,y:470,tx:300,ty:470,holding:null,conv:null,emote:null,emoteT:0,bubble:null,bubbleT:0
 };
 localStorage.setItem('kwc_id',me.id);
@@ -212,7 +342,9 @@ function nudge(x,y){
 const cv=$('cv');let ctx=cv.getContext('2d');
 let scale=1;
 function fit(){
-  scale=Math.min(innerWidth/W,innerHeight/H);
+  const st=$('stage');
+  const vw=st.clientWidth||innerWidth,vh=st.clientHeight||innerHeight;
+  scale=Math.min(vw/W,vh/H);
   cv.width=W*scale*devicePixelRatio;cv.height=H*scale*devicePixelRatio;
   cv.style.width=W*scale+'px';cv.style.height=H*scale+'px';
   ctx.setTransform(scale*devicePixelRatio,0,0,scale*devicePixelRatio,0,0);
@@ -514,13 +646,13 @@ $('btnMusic').onclick=e=>{
 /* ---------- networking ---------- */
 const LIVE=!!(CONFIG.SUPABASE_URL&&CONFIG.SUPABASE_ANON_KEY);
 let net=null,joined=false;
-function makeProfile(){return{name:me.name,skin:me.skin,color:me.color,hat:me.hat,x:me.x|0,y:me.y|0,holding:me.holding,conv:me.conv}}
+function makeProfile(){return{name:me.name,skin:me.skin,color:me.color,hat:me.hat,tagline:me.tagline,x:me.x|0,y:me.y|0,holding:me.holding,conv:me.conv}}
 function upsert(id,data){
   if(id===me.id)return;
   let p=players.get(id);
   if(!p){p={id,x:data.x||300,y:data.y||440,tx:data.x||300,ty:data.y||440,bubble:null,emote:null,emoteT:0,bubbleT:0};players.set(id,p);
     if(joined)toast(`${data.name} walked in`)}
-  Object.assign(p,{name:data.name,skin:data.skin,color:data.color,hat:data.hat,holding:data.holding,conv:data.conv,bot:data.bot});
+  Object.assign(p,{name:data.name,skin:data.skin,color:data.color,hat:data.hat,tagline:data.tagline,blurb:data.blurb,holding:data.holding,conv:data.conv,bot:data.bot});
   if(data.x!=null&&!p.seeded){p.x=data.x;p.y=data.y;p.tx=data.x;p.ty=data.y;p.seeded=true}
 }
 function refreshCount(){$('online').textContent=players.size+1}
@@ -579,13 +711,13 @@ class RealNet{
 
 /* ---------- demo bots with live circles ---------- */
 const BOTS=[
- {id:'b1',name:'Rui ☕',skin:1,color:4,hat:'cap',x:430,y:230,bot:true,home:[430,230],
+ {id:'b1',name:'Rui ☕',skin:1,color:4,hat:'cap',x:430,y:230,bot:true,home:[430,230],blurb:'King & Spadina · pulls the best shot on the strip',
   lines:["welcome to the commons! first one's on the house ☕","i pull the best shot on king west, fight me","you new here? love the energy","the 504 just went by, right on time"]},
- {id:'b2',name:'Casey 🐕',skin:0,color:1,hat:'toque',x:150,y:300,bot:true,home:[150,300],
+ {id:'b2',name:'Casey 🐕',skin:0,color:1,hat:'toque',x:150,y:300,bot:true,home:[150,300],blurb:"King & Bathurst · Biscuit's human",
   lines:["this is Biscuit. yes he's a good boy","doing a dog walk at 7 by the water — wanna come?","Biscuit made three friends today. i made zero lol","check the board, i posted the walk 🐾"]},
- {id:'b3',name:'Sam',skin:2,color:3,hat:'none',x:350,y:250,bot:true,home:[350,250],
+ {id:'b3',name:'Sam',skin:2,color:3,hat:'none',x:350,y:250,bot:true,home:[350,250],blurb:'King & Brant · reads AI news for fun',
   lines:["did you see the wire?? wild week in AI","i refresh that news board like it's a slot machine","ok but which model do you actually use daily","benchmarks are fake, vibes are real"]},
- {id:'b4',name:'Noor',skin:3,color:2,hat:'beret',x:230,y:430,bot:true,home:[230,430],
+ {id:'b4',name:'Noor',skin:3,color:2,hat:'beret',x:230,y:430,bot:true,home:[230,430],blurb:'just landed at King & Portland',
   lines:["just moved to king west! any food recs?","this place feels like the group chat came to life","someone offered me a coke earlier, instant friends","i come here between meetings to feel human again"]}
 ];
 const BOT_CIRCLES=[
@@ -811,13 +943,45 @@ function fridgeMenu(sx,sy){
 }
 
 /* ---------- input ---------- */
+/* ---------- v3: person card (slide-up) + tappable conversation haze ---------- */
+let psTarget=null;
+function openPersonSheet(p){
+  psTarget=p;
+  $('psName').textContent=p.name||'neighbour';
+  $('psTag').textContent=p.tagline||p.blurb||'King West neighbour';
+  const inConv=p.conv&&p.conv!==me.conv,mine=p.conv&&p.conv===me.conv;
+  if(inConv){$('psTalk').style.display='block';$('psTalk').textContent='💬 '+circleLabel(p.conv,false)}
+  else if(mine){$('psTalk').style.display='block';$('psTalk').textContent="💬 you're in this conversation"}
+  else $('psTalk').style.display='none';
+  $('psPrimary').textContent=inConv?'Join their chat':mine?'Open the chat':'💬 Message';
+  if(me.holding&&p.id!==me.id){
+    const drinks={coke:'Coke 🥤',water:'water 💧',coffee:'coffee ☕'};
+    $('psGift').style.display='block';$('psGift').textContent='🎁 Offer your '+drinks[me.holding];
+  }else $('psGift').style.display='none';
+  openSheet('personSheet');
+}
+$('psWave').onclick=()=>{const p=psTarget;closeSheets();
+  me.emote='👋';me.emoteT=performance.now()+2500;net.send('emote',{id:me.id,e:'👋'});
+  toast('you waved at '+(p?p.name:'them')+' 👋')};
+$('psPrimary').onclick=()=>{const p=psTarget;closeSheets();if(!p)return;
+  if(p.conv&&p.conv!==me.conv){const[nx,ny]=nudge(p.x+20,p.y+6);me.tx=nx;me.ty=ny;joinConv(p.conv)}
+  else if(p.conv&&p.conv===me.conv)openDock();
+  else startChatWith(p)};
+$('psGift').onclick=()=>{const p=psTarget;closeSheets();if(!p)return;
+  net.send('gift',{from:me.id,fromName:me.name,to:p.id,kind:'offer',item:me.holding});toast('offer sent…')};
+
 cv.addEventListener('pointerdown',e=>{
   if(!joined)return;
   const rect=cv.getBoundingClientRect();
   const x=(e.clientX-rect.left)/scale,y=(e.clientY-rect.top)/scale;
   for(const p of[...players.values()].sort((a,b)=>b.y-a.y)){
-    if(Math.hypot(x-p.x,y-(p.y-38))<16||Math.hypot(x-p.x,y-(p.y-20))<15){showActions(p,e.clientX,e.clientY);return}
+    if(Math.hypot(x-p.x,y-(p.y-38))<16||Math.hypot(x-p.x,y-(p.y-20))<15){openPersonSheet(p);return}
   }
+  // tap the bubble haze over a conversation
+  {const cg={};for(const p of players.values())if(p.conv)(cg[p.conv]=cg[p.conv]||[]).push(p);
+   for(const k in cg){const m=cg[k];if(m.length<2||k===me.conv)continue;
+     const cx=m.reduce((s,q)=>s+q.x,0)/m.length,cyc=m.reduce((s,q)=>s+q.y,0)/m.length;
+     if(Math.hypot(cx-x,cyc-y)<70){openPersonSheet(m[0]);return}}}
   const f=FURN.fridge;
   if(inRect(x,y,f,8)){
     if(Math.hypot(me.x-(f.x+f.w/2),me.y-(f.y+f.h+10))<70)fridgeMenu(e.clientX,e.clientY);
@@ -827,6 +991,90 @@ cv.addEventListener('pointerdown',e=>{
   if(inRect(x,y,FURN.board,6)){openSheet('newsSheet');return}
   if(inRect(x,y,FURN.cork,6)){openSheet('boardSheet');return}
   if(y>WALL){const[nx,ny]=nudge(x,y);me.tx=nx;me.ty=ny}
+});
+
+/* ---------- v3: bubble haze (from the shared design) ---------- */
+function hashSeed(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))%97;return h}
+function drawHaze(x,y,t,seed){
+  for(let i=0;i<5;i++){
+    const a=t*0.9+i*1.4+seed;
+    const bx=x+Math.sin(a)*16+(i-2)*9;
+    const by=y-14-((a*9+i*13)%26);
+    const r=3.2+(i%3);
+    ctx.fillStyle=`rgba(255,240,210,${Math.max(0.04,0.18-((a*9+i*13)%26)/26*0.12)})`;
+    ctx.beginPath();ctx.arc(bx,by,r,0,7);ctx.fill();
+  }
+  ctx.fillStyle='rgba(255,240,210,0.6)';
+  ctx.font='700 10px Avenir Next, sans-serif';ctx.textAlign='center';
+  ctx.fillText('· · ·',x,y-4);
+}
+
+/* ---------- v3: tabs + Bettermode embeds ---------- */
+const frames={};
+function buildFrame(wrapId,url,key){
+  if(frames[key])return;
+  const wrap=$(wrapId);
+  wrap.style.setProperty('--crop',(CONFIG.HEADER_CROP||0)+'px');
+  const note=document.createElement('div');note.className='frameNote';
+  note.innerHTML=`<div class="big">🏙️</div><p>Opening this corner of the Commons…</p><button class="btnA" data-retry>Retry</button>`;
+  const f=document.createElement('iframe');f.src=url;f.allow='clipboard-write; web-share';
+  f.addEventListener('load',()=>setTimeout(()=>{note.style.display='none'},600));
+  note.querySelector('[data-retry]').onclick=()=>{f.src=url};
+  wrap.appendChild(note);wrap.appendChild(f);frames[key]=f;
+}
+const TABMAP={commons:['fwCommons','COMMONS_URL'],passalong:['fwPassalong','PASSALONG_URL'],directory:['fwDirectory','DIRECTORY_URL'],profile:['fwProfile','PROFILE_URL']};
+document.querySelectorAll('.tab').forEach(tb=>{
+  tb.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===tb));
+    const v=tb.dataset.v;
+    document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id==='view-'+v));
+    if(TABMAP[v])buildFrame(TABMAP[v][0],CONFIG[TABMAP[v][1]],v);
+    if(v==='room')setTimeout(fit,50);
+  });
+});
+
+/* ---------- v3: hamburger settings ---------- */
+const VIBE_LBL={off:'off',lounge:'☕ Late Lounge',rain:'🌧 Rainy Window',beat:'🥁 Espresso Beat'};
+function openSettings(){
+  $('aliasNow').textContent=me.name||'—';
+  $('musicNow').textContent=VIBE_LBL[Music.vibe]||'off';
+  $('settings').classList.add('open');
+}
+$('btnMenu').onclick=openSettings;
+$('setBack').onclick=()=>{
+  const sf=$('setFrame');
+  if(sf.style.display!=='none'){sf.style.display='none';sf.innerHTML='';$('setList').style.display='block';$('setTitle').textContent='Settings';return}
+  $('settings').classList.remove('open');
+};
+$('siAlias').onclick=()=>{
+  const r=$('aliasRow');
+  r.style.display=r.style.display==='flex'?'none':'flex';
+  $('aliasInput').value=me.name;$('aliasInput').focus();
+};
+$('aliasSave').onclick=()=>{
+  const n=$('aliasInput').value.trim();if(!n)return;
+  me.name=n;localStorage.setItem('kwc_name',n);net&&net.sync();
+  $('aliasNow').textContent=n;$('aliasRow').style.display='none';
+  toast('alias updated — the room sees “'+n+'” now');
+};
+$('siOutfit').onclick=()=>{$('settings').classList.remove('open');buildOutfitSheet();openSheet('outfitSheet')};
+$('siMusic').onclick=()=>{
+  const order=['off','lounge','rain','beat'];
+  const nxt=order[(order.indexOf(Music.vibe)+1)%4];
+  if(nxt==='off')Music.stop();else Music.start(nxt);
+  localStorage.setItem('kwc_vibe',nxt);
+  $('btnMusic').classList.toggle('on',nxt!=='off');$('btnMusic').textContent=nxt==='off'?'🎵':'🎵♪';
+  $('musicNow').textContent=VIBE_LBL[nxt];
+};
+document.querySelectorAll('.setItem[data-bm]').forEach(b=>{
+  b.onclick=()=>{
+    const url=CONFIG[b.dataset.bm];if(!url)return;
+    $('setList').style.display='none';
+    $('setTitle').textContent=b.querySelector('b').textContent;
+    const sf=$('setFrame');sf.style.display='block';
+    sf.style.setProperty('--crop',(CONFIG.HEADER_CROP||0)+'px');
+    sf.innerHTML='';const f=document.createElement('iframe');f.src=url;sf.appendChild(f);
+  };
 });
 
 /* ---------- main loop ---------- */
@@ -844,6 +1092,13 @@ function loop(){
     for(const p of players.values())step(p,dt);
     const all=[...players.values(),me].sort((a,b)=>a.y-b.y);
     for(const p of all)drawAvatar(p,t);
+    // v3: drifting bubble haze over each conversation
+    {const cg={};
+     for(const p of all)if(p.conv)(cg[p.conv]=cg[p.conv]||[]).push(p);
+     for(const k in cg){const m=cg[k];if(m.length<2)continue;
+       const cx=m.reduce((s,q)=>s+q.x,0)/m.length;
+       const cy=Math.min(...m.map(q=>q.y))-78;
+       drawHaze(cx,cy,t*0.001,hashSeed(k));}}
     if(t-lastMoveSent>140&&(Math.abs(me.tx-me.x)>2||Math.abs(me.ty-me.y)>2)){
       lastMoveSent=t;net.send('move',{id:me.id,x:me.tx|0,y:me.ty|0});
     }
@@ -884,10 +1139,12 @@ $('enterBtn').onclick=async()=>{
   const n=$('nameInput').value.trim();
   if(!n){$('nameInput').focus();return}
   me.name=n;localStorage.setItem('kwc_name',n);
+  me.tagline=$('tagInput').value.trim();localStorage.setItem('kwc_tag',me.tagline);
   $('enterBtn').textContent='OPENING THE DOOR…';
   net=LIVE?new RealNet():new DemoNet();
   try{await net.join()}catch(e){$('enterBtn').textContent='ENTER THE CAFÉ';return}
   joined=true;$('join').style.display='none';
+  setTimeout(fit,50);
   toast(LIVE?'you\'re live — everyone here is real':'demo room — these regulars are bots');
   const v=localStorage.getItem('kwc_vibe');
   if(v&&v!=='off'){Music.start(v);$('btnMusic').classList.add('on');$('btnMusic').textContent='🎵♪'}
