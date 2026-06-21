@@ -1399,11 +1399,13 @@ setInterval(()=>{if(!joined)drawPreview()},400);
   scene.add(new THREE.HemisphereLight(0xfff3e0,0x281d14,0.85));
   const kl=new THREE.DirectionalLight(0xfff0d6,0.9);kl.position.set(4,8,6);scene.add(kl);
   const rl=new THREE.DirectionalLight(0xffc46a,0.35);rl.position.set(-5,3,-4);scene.add(rl);
+  const fl=new THREE.DirectionalLight(0xffffff,0.22);fl.position.set(0,1.5,9);scene.add(fl);
   const mat=(h,r)=>new THREE.MeshStandardMaterial({color:new THREE.Color(h),roughness:r==null?0.78:r,metalness:0.04});
   const sph=(r,h)=>new THREE.Mesh(new THREE.SphereGeometry(r,24,18),mat(h));
   const cyl=(a,b,c,h)=>new THREE.Mesh(new THREE.CylinderGeometry(a,b,c,24),mat(h));
   const cone=(r,c,h)=>new THREE.Mesh(new THREE.ConeGeometry(r,c,18),mat(h));
   const box=(w,c,d,h)=>new THREE.Mesh(new THREE.BoxGeometry(w,c,d),mat(h));
+  const lathe=(prof,h)=>{const m=new THREE.Mesh(new THREE.LatheGeometry(prof.map(p=>new THREE.Vector2(p[0],p[1])),28),mat(h));m.material.side=THREE.DoubleSide;return m;};
   const tt=new THREE.Group();scene.add(tt);
   const disc=new THREE.Group();tt.add(disc);
   disc.add(cyl(1.85,2.0,0.5,'#3a2c20'));
@@ -1427,14 +1429,15 @@ setInterval(()=>{if(!joined)drawPreview()},400);
     else if(me.hat==='cap'){const c=sph(0.88,'#2e3f55');c.scale.set(1,0.7,1);add(c,0,HY+0.42,0);add(box(0.9,0.1,0.6,'#2e3f55'),0,HY+0.34,0.72);}
     else if(me.hat==='beret'){const br=cyl(0.96,0.96,0.24,'#5a3a66');br.rotation.z=0.12;add(br,0,HY+0.6,-0.06);}
   }
-  function arm(side,skin,col){const p=new THREE.Group();p.position.set(side*0.66,2.28,0);const a=cyl(0.16,0.14,0.95,col);a.position.y=-0.48;p.add(a);const h=sph(0.17,skin);h.position.y=-0.98;p.add(h);charG.add(p);return p;}
+  function arm(side,skin,col){const p=new THREE.Group();p.position.set(side*0.54,2.14,0);p.add(sph(0.2,col));const a=cyl(0.15,0.12,0.8,col);a.position.y=-0.45;p.add(a);const h=sph(0.16,skin);h.position.y=-0.86;p.add(h);charG.add(p);return p;}
   let idle=0,turning=false,turnA=0,disp=99,lineIdx=0,last=performance.now();
   function rebuild(){
     for(let i=charG.children.length-1;i>=0;i--)charG.remove(charG.children[i]);
     const skin=SKINS[me.skin%4],col=COLORS[me.color%6];
-    add(cyl(0.17,0.17,0.72,'#2a2a33'),-0.24,0.6,0);
-    add(cyl(0.17,0.17,0.72,'#2a2a33'),0.24,0.6,0);
-    add(cyl(0.52,0.74,1.5,col),0,1.72,0);
+    const sh=new THREE.Mesh(new THREE.CircleGeometry(0.62,28),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.26}));sh.rotation.x=-Math.PI/2;sh.position.set(0,0.33,0);charG.add(sh);
+    for(const s of [-1,1]){add(cyl(0.17,0.14,0.5,'#33313a'),s*0.21,0.6,0);const fo=sph(0.2,'#2a2a30');fo.scale.set(1,0.55,1.45);add(fo,s*0.21,0.3,0.12);}
+    const body=lathe([[0.30,2.52],[0.58,2.28],[0.56,1.95],[0.45,1.55],[0.53,1.18],[0.585,1.0],[0.40,0.92],[0.0,0.90]],col);charG.add(body);
+    add(cyl(0.24,0.3,0.3,skin),0,2.5,0);
     head(skin);hat();
     lArm=arm(-1,skin,col);rArm=arm(1,skin,col);
     tt.rotation.y=0;charG.position.y=0;charG.rotation.z=0;idle=0;turning=false;turnA=0;
