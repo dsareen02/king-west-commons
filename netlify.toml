@@ -1,0 +1,11 @@
+# Netlify continuous deployment config for King West Commons (the Lounge).
+# Static site — no build step. Netlify publishes the kwc-deploy/ folder as the site root.
+#
+# Deploy model (credit-safe): Netlify's PRODUCTION BRANCH is set to `production`
+# in the Netlify UI — NOT `main`. The com.kwc.autosave agent pushes `main` every
+# ~90s as backup, which must NOT trigger deploys. A deploy happens only when the
+# `production` branch is updated (done intentionally, "on deploy").
+
+[build]
+  publish = "kwc-deploy"
+  command = ""
