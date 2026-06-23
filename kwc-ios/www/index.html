@@ -1218,8 +1218,8 @@ cv.addEventListener('pointerdown',e=>{
   // tap the bubble haze over a conversation
   {const cg={};for(const p of players.values())if(p.conv)(cg[p.conv]=cg[p.conv]||[]).push(p);
    for(const k in cg){const m=cg[k];if(m.length<2||k===me.conv)continue;
-     const cx=m.reduce((s,q)=>s+q.x,0)/m.length,cyc=m.reduce((s,q)=>s+q.y,0)/m.length;
-     if(Math.hypot(cx-x,cyc-y)<70){openPersonSheet(m[0]);return}}}
+     const cx=m.reduce((s,q)=>s+q.x,0)/m.length,hy=Math.min(...m.map(q=>q.y))-78;
+     if(Math.hypot(cx-x,hy-y)<34){openPersonSheet(m[0]);return}}}
   const f=FURN.fridge;
   if(inRect(x,y,f,8)){
     if(Math.hypot(me.x-(f.x+f.w/2),me.y-(f.y+f.h+10))<70)fridgeMenu(e.clientX,e.clientY);
