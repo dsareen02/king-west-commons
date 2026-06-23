@@ -100,9 +100,9 @@
   #join{position:fixed;inset:0;z-index:20;background:linear-gradient(rgba(14,10,7,.26),rgba(14,10,7,.46));-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:14px 0}
   #joinCard{width:min(92vw,400px);text-align:center;padding:14px 16px;margin:auto;background:rgba(28,22,17,.62);border:1px solid rgba(255,196,106,.22);border-radius:20px;box-shadow:0 18px 50px rgba(0,0,0,.4)}
   #joinCard h1{font-size:21px;letter-spacing:.22em;color:var(--gold)}
-  #joinCard .tag{font-size:10px;letter-spacing:.4em;color:#9c917f;margin:5px 0 10px}
-  .liveDot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#46d160;margin-right:6px;vertical-align:middle;animation:livePulse 1.6s ease-out infinite}
-  @keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(70,209,96,.65)}70%{box-shadow:0 0 0 7px rgba(70,209,96,0)}100%{box-shadow:0 0 0 0 rgba(70,209,96,0)}}
+  #joinCard .tag{font-size:13px;letter-spacing:.28em;color:#9c917f;margin:5px 0 10px}
+  .liveDot{display:inline-block;width:13px;height:13px;border-radius:50%;background:#46d160;margin-right:12px;vertical-align:middle;animation:livePulse 1.6s ease-out infinite}
+  @keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(70,209,96,.6)}70%{box-shadow:0 0 0 13px rgba(70,209,96,0)}100%{box-shadow:0 0 0 0 rgba(70,209,96,0)}}
   #avStage{position:relative;width:210px;height:264px;margin:0 auto}
   #av3d{width:100%;height:100%;display:block}
   #avPrev{width:84px;height:100px;margin:0 auto;display:none}
@@ -151,7 +151,7 @@
               border:1px solid rgba(255,196,106,.22);border-radius:22px;
               box-shadow:0 24px 70px rgba(0,0,0,.45)}
     #joinCard h1{font-size:26px}
-    #joinCard .tag{font-size:11px;margin:8px 0 22px}
+    #joinCard .tag{font-size:14px;margin:8px 0 22px}
     #joinBody{display:grid;grid-template-columns:230px 1fr;gap:34px;align-items:center;text-align:left}
     #joinLeft{display:flex;flex-direction:column;align-items:center;justify-content:center}
     #joinRight{display:block}
@@ -268,8 +268,8 @@
 
 <div id="join">
   <div id="joinCard">
-    <h1>THE LIVE LOUNGE</h1>
-    <div class="tag">King West Commons · <span class="liveDot"></span>live right now</div>
+    <h1><span class="liveDot"></span>THE LIVE LOUNGE</h1>
+    <div class="tag">anonymous · no real names</div>
     <!-- BUG-004: two-column wrapper. On mobile (<=760px) this is display:contents
          so children render in original single-column order → pixel-identical to today.
          At >=761px it becomes a 2-col grid: avatar LEFT, form RIGHT. -->
@@ -290,8 +290,8 @@
         <div class="row" id="colorRow"></div>
         <div class="row" id="hatRow"></div>
         <button id="enterBtn">ENTER THE LOUNGE</button>
-        <div id="anonNote">🕶️ Anonymous — pick a look and come chat with whoever's live right now.</div>
-        <div id="joinNote">no real names here · your real name stays private in your Commons profile</div>
+        <div id="anonNote">Pick a look and come chat with whoever's live right now. Your real name stays private in your Commons profile.</div>
+        
       </div>
     </div>
   </div>
@@ -377,6 +377,8 @@ const FURN={
   cork:{x:470,y:34,w:90,h:70},
   window:{x:40,y:22,w:200,h:86}
 };
+const DRINK_ICON={coke:'🥤',water:'💧',energy:'⚡',americano:'☕',cappuccino:'🧋',matcha:'🍵'};
+const DRINK_LABEL={coke:'Coke 🥤',water:'water 💧',energy:'energy drink ⚡',americano:'Americano ☕',cappuccino:'cappuccino 🧋',matcha:'Matcha 🍵'};
 /* v2: stools around tables + bar stools at counter (small, cozy) */
 const STOOLS=[
   {x:150,y:318},{x:248,y:336},{x:172,y:404},{x:240,y:398},
@@ -532,7 +534,10 @@ function drawRoom(t){
     g2.addColorStop(0,'rgba(255,200,120,0.10)');g2.addColorStop(1,'rgba(255,200,120,0)');
     ctx.fillStyle=g2;ctx.fillRect(lx-90,ly-90,180,180);
   }
-  const rg=FURN.rug;ctx.fillStyle='#7d3b3b';rr(rg.x,rg.y,rg.w,rg.h,10);ctx.fill();
+  const rg=FURN.rug;
+  ctx.fillStyle='rgba(0,0,0,0.16)';rr(rg.x+3,rg.y+6,rg.w,rg.h,12);ctx.fill();
+  ctx.fillStyle='#7d3b3b';rr(rg.x,rg.y,rg.w,rg.h,10);ctx.fill();
+  ctx.fillStyle='#8c4646';rr(rg.x+5,rg.y+5,rg.w-10,rg.h-10,9);ctx.fill();
   ctx.strokeStyle='#a85b4b';ctx.lineWidth=2;rr(rg.x+8,rg.y+8,rg.w-16,rg.h-16,8);ctx.stroke();
   ctx.fillStyle='#3f2d1c';rr(262,H-26,76,20,6);ctx.fill();
   ctx.fillStyle='#9c917f';ctx.font='9px Avenir Next, sans-serif';ctx.fillText('welcome',300,H-12);
@@ -547,8 +552,11 @@ function drawStool(s){
 }
 function drawFurniture(){
   const c=FURN.counter;
+  ctx.fillStyle='rgba(0,0,0,0.25)';rr(c.x+4,c.y+c.h-2,c.w,14,8);ctx.fill();
+  ctx.fillStyle='#2c1f13';rr(c.x,c.y+6,c.w,c.h,8);ctx.fill();
   ctx.fillStyle='#3f2d1c';rr(c.x,c.y,c.w,c.h,8);ctx.fill();
   ctx.fillStyle='#5d4634';rr(c.x,c.y-8,c.w,14,6);ctx.fill();
+  ctx.fillStyle='#6f553e';rr(c.x,c.y-8,c.w,5,6);ctx.fill();
   ctx.fillStyle='#e8dfcd';ctx.font='10px Avenir Next, sans-serif';ctx.textAlign='center';ctx.fillText('☕ espresso bar',c.x+c.w/2,c.y+28);
   ctx.fillStyle='#22262e';rr(c.x+18,c.y-26,38,22,4);ctx.fill();
   ctx.fillStyle='#ffd98c';ctx.fillRect(c.x+30,c.y-18,6,4);
@@ -559,14 +567,21 @@ function drawFurniture(){
   ctx.fillStyle='#fff';ctx.font='14px sans-serif';ctx.fillText('🥤',f.x+f.w/2,f.y+52);
   ctx.shadowColor='#ff6a55';ctx.shadowBlur=14;ctx.strokeStyle='rgba(255,106,85,0.5)';ctx.lineWidth=2;rr(f.x,f.y,f.w,f.h,8);ctx.stroke();ctx.shadowBlur=0;
   const s=FURN.couch;
+  ctx.fillStyle='rgba(0,0,0,0.24)';rr(s.x-6,s.y+26,s.w+12,12,8);ctx.fill();
+  ctx.fillStyle='#2f4259';rr(s.x,s.y+10,s.w,26,10);ctx.fill();
   ctx.fillStyle='#41597a';rr(s.x,s.y-16,s.w,30,10);ctx.fill();
-  ctx.fillStyle='#4f6b91';rr(s.x,s.y+2,s.w,30,10);ctx.fill();
-  ctx.fillStyle='#41597a';rr(s.x-8,s.y-10,16,40,8);ctx.fill();rr(s.x+s.w-8,s.y-10,16,40,8);ctx.fill();
+  ctx.fillStyle='#4f6b91';rr(s.x,s.y+2,s.w,28,10);ctx.fill();
+  ctx.fillStyle='#5d7aa3';rr(s.x+8,s.y+5,s.w-16,9,5);ctx.fill();
+  ctx.fillStyle='#3a5070';rr(s.x-8,s.y-10,16,42,8);ctx.fill();rr(s.x+s.w-8,s.y-10,16,42,8);ctx.fill();
+  ctx.fillStyle='#4f6b91';rr(s.x-7,s.y-9,14,10,5);ctx.fill();rr(s.x+s.w-7,s.y-9,14,10,5);ctx.fill();
   // v2 armchair
   const a=FURN.armchair;
+  ctx.fillStyle='rgba(0,0,0,0.2)';rr(a.x-4,a.y+22,a.w+8,10,7);ctx.fill();
+  ctx.fillStyle='#5a3c22';rr(a.x,a.y+6,a.w,24,10);ctx.fill();
   ctx.fillStyle='#6e4a2a';rr(a.x,a.y-12,a.w,26,10);ctx.fill();
   ctx.fillStyle='#7d5733';rr(a.x+4,a.y+4,a.w-8,24,8);ctx.fill();
-  ctx.fillStyle='#6e4a2a';rr(a.x-6,a.y-6,12,32,6);ctx.fill();rr(a.x+a.w-6,a.y-6,12,32,6);ctx.fill();
+  ctx.fillStyle='#8c6440';rr(a.x+8,a.y+6,a.w-16,8,5);ctx.fill();
+  ctx.fillStyle='#5f3f24';rr(a.x-6,a.y-6,12,32,6);ctx.fill();rr(a.x+a.w-6,a.y-6,12,32,6);ctx.fill();
   for(const key of['table1','table2']){
     const tb=FURN[key];
     ctx.fillStyle='rgba(0,0,0,0.18)';ctx.beginPath();ctx.ellipse(tb.x+tb.w/2,tb.y+tb.h/2+12,tb.w/2,14,0,0,7);ctx.fill();
@@ -660,7 +675,7 @@ function drawAvatar(p,t){
   if(p.hat==='toque'){ctx.fillStyle='#d9544a';rr(x-9,y-50+bob,18,8,4);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,y-52+bob,3,0,7);ctx.fill()}
   else if(p.hat==='cap'){ctx.fillStyle='#2e3f55';rr(x-9,y-48+bob,18,6,3);ctx.fill();ctx.fillRect(x-13,y-44+bob,9,3)}
   else if(p.hat==='beret'){ctx.fillStyle='#5a3a66';ctx.beginPath();ctx.ellipse(x-1,y-47+bob,10,4.5,-0.2,0,7);ctx.fill()}
-  if(p.holding){ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText(p.holding==='coke'?'🥤':p.holding==='water'?'💧':'☕',x+14,y-22+bob)}
+  if(p.holding){ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText(DRINK_ICON[p.holding]||'☕',x+14,y-22+bob)}
   ctx.font='600 10px Avenir Next, sans-serif';ctx.textAlign='center';
   ctx.fillStyle='rgba(23,19,16,0.7)';const nw=ctx.measureText(p.name||'').width+10;
   rr(x-nw/2,y-66+bob,nw,13,6);ctx.fill();
@@ -676,6 +691,15 @@ function drawAvatar(p,t){
     const bw=ctx.measureText(tx).width+16;
     ctx.fillStyle='rgba(255,251,240,0.97)';rr(x-bw/2,y-86+bob,bw,18,9);ctx.fill();
     ctx.fillStyle='#241a14';ctx.fillText(tx,x,y-73+bob);
+  }
+  if(p.joinReq){
+    ctx.font='600 9px Avenir Next, sans-serif';ctx.textAlign='center';
+    const jrMine=p.id===me.id;
+    const jrTxt=jrMine?(p.joinReq.state==='declined'?"they're chatting · maybe later":"asking to join…"):((p.joinReq.fromName||p.name)+" wants in · tap to decide");
+    const jrw=ctx.measureText(jrTxt).width+14;
+    ctx.fillStyle=jrMine?(p.joinReq.state==='declined'?'rgba(120,40,30,0.92)':'rgba(40,60,90,0.92)'):'rgba(55,95,45,0.94)';
+    rr(x-jrw/2,y-94+bob,jrw,16,8);ctx.fill();
+    ctx.fillStyle='#fff';ctx.fillText(jrTxt,x,y-83+bob);
   }
 }
 
@@ -849,6 +873,32 @@ function handleCinvite(m){
 function handleCjoin(m){
   if(me.conv===m.conv&&m.id!==me.id)pushLog(m.conv,{sys:true,text:(m.name||'someone')+' joined the conversation'});
 }
+/* ---- A21: join-the-conversation consent flow (works over Supabase for real people; bots always decline) ---- */
+function requestJoin(conv){
+  if(me.conv===conv){openDock();return;}
+  if(me.joinReq&&me.joinReq.state==='pending'){toast("you already asked, give them a sec");return;}
+  me.joinReq={conv:conv,state:'pending',t:performance.now()};
+  net.send('cjoinrequest',{conv:conv,from:me.id,fromName:me.name,name:me.name});
+}
+function handleCjoinRequest(m){
+  if(m.from===me.id)return;
+  const p=players.get(m.from);
+  if(p)p.joinReq={conv:m.conv,fromName:m.fromName||m.name,t:performance.now(),incoming:true};
+}
+function handleCjoinApprove(m){
+  if(m.to!==me.id)return;
+  me.joinReq=null;joinConv(m.conv);
+}
+function handleCjoinReject(m){
+  if(m.to!==me.id)return;
+  if(me.joinReq&&me.joinReq.conv===m.conv){me.joinReq.state='declined';me.joinReq.t=performance.now();
+    setTimeout(function(){if(me.joinReq&&me.joinReq.state==='declined')me.joinReq=null;},3500);}
+}
+function answerJoin(p,accept){
+  if(!p||!p.joinReq)return;
+  net.send(accept?'cjoinapprove':'cjoinreject',{conv:p.joinReq.conv,to:p.id});
+  p.joinReq=null;
+}
 
 class RealNet{
   async join(){
@@ -869,6 +919,9 @@ class RealNet{
     ch.on('broadcast',{event:'gift'},({payload:m})=>{if(m.to===me.id)receiveGift(m)});
     ch.on('broadcast',{event:'emote'},({payload:m})=>{const p=players.get(m.id);if(p){p.emote=m.e;p.emoteT=performance.now()+2500}});
     ch.on('broadcast',{event:'note'},({payload:m})=>{notes.unshift(m);renderNotes();toast('📌 new note on the board')});
+    ch.on('broadcast',{event:'cjoinrequest'},({payload:m})=>handleCjoinRequest(m));
+    ch.on('broadcast',{event:'cjoinapprove'},({payload:m})=>handleCjoinApprove(m));
+    ch.on('broadcast',{event:'cjoinreject'},({payload:m})=>handleCjoinReject(m));
     await new Promise((res,rej)=>{
       ch.subscribe(async s=>{
         if(s==='SUBSCRIBED'){
@@ -912,7 +965,6 @@ const BOT_CIRCLES=[
 ];
 class DemoNet{
   async join(){
-    $('demoBadge').style.display='block';
     for(const b of BOTS){upsert(b.id,b);players.get(b.id).lineIdx=0}
     refreshCount();
     // seat circle pairs at their spots, run scripts forever
@@ -971,6 +1023,11 @@ class DemoNet{
       const p=players.get(m.to);if(!p||!p.bot)return;
       setTimeout(()=>{receiveGift({from:m.to,fromName:p.name,to:me.id,kind:'accept',item:m.item});p.holding=m.item},1200);
     }
+    if(ev==='cjoinrequest'){
+      // an all-bot circle always declines, after a thoughtful ~7-9s beat
+      const ms=7000+Math.random()*2500;
+      setTimeout(function(){handleCjoinReject({conv:m.conv,to:me.id});},ms);
+    }
   }
   sync(){}
 }
@@ -1021,7 +1078,7 @@ function joinConv(conv){
   openDock();
 }
 function startChatWith(p){
-  if(p.conv){joinConv(p.conv);return}
+  if(p.conv){requestJoin(p.conv);return}
   const conv='c'+Math.random().toString(36).slice(2,9);
   me.conv=conv;net.sync();
   convLogs.set(conv,[]);
@@ -1047,7 +1104,7 @@ function sendMsg(){
 function receiveGift(m){
   if(m.kind==='offer'){
     const name=m.fromName||'someone';
-    const ok=confirm(`${name} offers you a ${m.item==='coke'?'Coke 🥤':m.item==='water'?'water 💧':'coffee ☕'} — accept?`);
+    const ok=confirm(`${name} offers you ${DRINK_LABEL[m.item]||'a drink'}. Accept?`);
     if(ok){me.holding=m.item;net.sync();addPts(2,'accepted a '+m.item);
       net.send('gift',{from:me.id,fromName:me.name,to:m.from,kind:'accept',item:m.item});}
   }else if(m.kind==='accept'){
@@ -1090,7 +1147,7 @@ function showMenu(html,sx,sy,onPick){
 }
 addEventListener('pointerdown',e=>{if(!actMenu.contains(e.target))actMenu.style.display='none'},true);
 function showActions(p,sx,sy){
-  const drinks={coke:'Coke 🥤',water:'water 💧',coffee:'coffee ☕'};
+  const drinks=DRINK_LABEL;
   let html='';
   if(p.conv&&p.conv!==me.conv){
     html+=`<div class="head">${esc(circleLabel(p.conv,false))}</div>`;
@@ -1112,9 +1169,15 @@ function showActions(p,sx,sy){
   });
 }
 function fridgeMenu(sx,sy){
-  showMenu(`<button data-d="coke">🥤 Grab a Coke</button><button data-d="water">💧 Grab a water</button><button data-d="coffee">☕ Grab a coffee</button>`,sx,sy,b=>{
+  showMenu(`<button data-d="coke">🥤 Grab a Coke</button><button data-d="water">💧 Grab a water</button><button data-d="energy">⚡ Grab an energy drink</button>`,sx,sy,b=>{
     me.holding=b.dataset.d;net.sync();
-    toast('you grabbed a '+b.dataset.d+' — offer it to someone 🎁');
+    toast('you grabbed '+(DRINK_LABEL[b.dataset.d]||b.dataset.d)+' 🎁 offer it to someone');
+  });
+}
+function espressoMenu(sx,sy){
+  showMenu(`<button data-d="americano">☕ Americano</button><button data-d="cappuccino">🧋 Cappuccino</button><button data-d="matcha">🍵 Matcha</button>`,sx,sy,b=>{
+    me.holding=b.dataset.d;net.sync();
+    toast('you grabbed '+(DRINK_LABEL[b.dataset.d]||b.dataset.d)+' ☕');
   });
 }
 
@@ -1131,7 +1194,7 @@ function openPersonSheet(p){
   else $('psTalk').style.display='none';
   $('psPrimary').textContent=inConv?'Join their chat':mine?'Open the chat':'💬 Message';
   if(me.holding&&p.id!==me.id){
-    const drinks={coke:'Coke 🥤',water:'water 💧',coffee:'coffee ☕'};
+    const drinks=DRINK_LABEL;
     $('psGift').style.display='block';$('psGift').textContent='🎁 Offer your '+drinks[me.holding];
   }else $('psGift').style.display='none';
   openSheet('personSheet');
@@ -1140,7 +1203,7 @@ $('psWave').onclick=()=>{const p=psTarget;closeSheets();
   me.emote='👋';me.emoteT=performance.now()+2500;net.send('emote',{id:me.id,e:'👋'});
   toast('you waved at '+(p?p.name:'them')+' 👋')};
 $('psPrimary').onclick=()=>{const p=psTarget;closeSheets();if(!p)return;
-  if(p.conv&&p.conv!==me.conv){const[nx,ny]=nudge(p.x+20,p.y+6);me.tx=nx;me.ty=ny;joinConv(p.conv)}
+  if(p.conv&&p.conv!==me.conv){const[nx,ny]=nudge(p.x+20,p.y+6);me.tx=nx;me.ty=ny;requestJoin(p.conv)}
   else if(p.conv&&p.conv===me.conv)openDock();
   else startChatWith(p)};
 $('psGift').onclick=()=>{const p=psTarget;closeSheets();if(!p)return;
@@ -1150,7 +1213,7 @@ cv.addEventListener('pointerdown',e=>{
   if(!joined)return;
   const [x,y]=screenToWorld(e.clientX,e.clientY);  // BUG-001: invert camera+zoom
   for(const p of[...players.values()].sort((a,b)=>b.y-a.y)){
-    if(Math.hypot(x-p.x,y-(p.y-38))<16||Math.hypot(x-p.x,y-(p.y-20))<15){openPersonSheet(p);return}
+    if(Math.hypot(x-p.x,y-(p.y-38))<16||Math.hypot(x-p.x,y-(p.y-20))<15){if(p.joinReq&&p.joinReq.incoming&&me.conv===p.joinReq.conv){answerJoin(p,confirm((p.joinReq.fromName||p.name)+" wants to join your chat. Let them in?"));return}openPersonSheet(p);return}
   }
   // tap the bubble haze over a conversation
   {const cg={};for(const p of players.values())if(p.conv)(cg[p.conv]=cg[p.conv]||[]).push(p);
@@ -1161,6 +1224,12 @@ cv.addEventListener('pointerdown',e=>{
   if(inRect(x,y,f,8)){
     if(Math.hypot(me.x-(f.x+f.w/2),me.y-(f.y+f.h+10))<70)fridgeMenu(e.clientX,e.clientY);
     else{const[nx,ny]=nudge(f.x+f.w/2,f.y+f.h+18);me.tx=nx;me.ty=ny;toast('walk to the fridge, then tap it')}
+    return;
+  }
+  const cb=FURN.counter;
+  if(inRect(x,y,cb,8)){
+    if(Math.hypot(me.x-(cb.x+cb.w/2),me.y-(cb.y+cb.h+10))<80)espressoMenu(e.clientX,e.clientY);
+    else{const[nx,ny]=nudge(cb.x+cb.w/2,cb.y+cb.h+20);me.tx=nx;me.ty=ny;toast('walk to the espresso bar, then tap it')}
     return;
   }
   if(inRect(x,y,FURN.board,6)){openSheet('newsSheet');return}
@@ -1294,7 +1363,14 @@ document.querySelectorAll('.setItem[data-bm]').forEach(b=>{
 let lastMoveSent=0,prev=performance.now();
 function step(ent,dt){
   const dx=ent.tx-ent.x,dy=ent.ty-ent.y,d=Math.hypot(dx,dy);
-  if(d>2){const sp=130*dt;const k=Math.min(1,sp/d);ent.x+=dx*k;ent.y+=dy*k}
+  if(d<=2)return;
+  const sp=130*dt,k=Math.min(1,sp/d);
+  let nx=ent.x+dx*k,ny=ent.y+dy*k;
+  if(ent!==me){ent.x=nx;ent.y=ny;return;}
+  if(walkable(nx,ny)){ent.x=nx;ent.y=ny;}
+  else if(walkable(nx,ent.y)){ent.x=nx;}
+  else if(walkable(ent.x,ny)){ent.y=ny;}
+  else{ent.tx=ent.x;ent.ty=ent.y;}
 }
 const ENTRY_BOTS=BOTS.map(b=>Object.assign({},b,{tx:b.x,ty:b.y}));
 ENTRY_BOTS.forEach((b,i)=>{if(i<3)b.conv='entry';});
@@ -1461,7 +1537,7 @@ $('enterBtn').onclick=async()=>{
   try{await net.join()}catch(e){$('enterBtn').textContent='ENTER THE LOUNGE';return}
   joined=true;$('join').style.display='none';
   setTimeout(fit,50);
-  toast(LIVE?'you\'re live — everyone here is real':'demo room — these regulars are bots');
+  if(LIVE)toast("you're live, everyone here is real");
   const v=localStorage.getItem('kwc_vibe');
   if(v&&v!=='off'){Music.start(v);$('btnMusic').classList.add('on');$('btnMusic').textContent='🎵♪'}
 };
