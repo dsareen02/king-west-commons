@@ -130,7 +130,7 @@
   .bGhost{background:transparent;color:var(--gold);border:1.5px solid var(--gold)}
   .bWide{width:100%;margin-top:10px;padding:13px;border-radius:99px;background:#332a21;border:none;color:var(--cream);font-weight:600;font-size:14px}
   #demoBadge{display:none;position:absolute;top:max(54px,calc(env(safe-area-inset-top) + 44px));left:50%;transform:translateX(-50%);z-index:5;font-size:10px;letter-spacing:.1em;color:#ffb1a3;background:rgba(80,25,18,.8);border-radius:12px;padding:4px 12px;white-space:nowrap}
-  #toastC{position:fixed;top:16%;left:50%;transform:translateX(-50%);z-index:12;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:max-content;max-width:92vw}
+  #toastC{position:fixed;bottom:13%;left:50%;transform:translateX(-50%);z-index:12;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:max-content;max-width:92vw}
   .toastMsg{background:rgba(23,19,16,.92);border:1px solid rgba(255,196,106,.45);border-radius:12px;padding:9px 16px;font-size:13px;animation:tIn .3s,tOut .4s 3.6s forwards;max-width:92vw}
   @keyframes tIn{from{opacity:0;transform:translateY(-8px)}}
   @keyframes tOut{to{opacity:0}}
@@ -509,9 +509,7 @@ function drawRoom(t){
      from under the corner HUD. */
   ctx.font='700 13px Avenir Next, sans-serif';ctx.textAlign='center';
   ctx.fillStyle='#ffc46a';ctx.shadowColor='#ffc46a';ctx.shadowBlur=12;
-  ctx.fillText('THE LIVE LOUNGE',W/2,114);ctx.shadowBlur=0;
-  ctx.font='700 10px Avenir Next, sans-serif';ctx.fillStyle='rgba(255,214,150,.95)';
-  ctx.fillText('🔒 anonymous · no real names',W/2,126);
+  ctx.fillText('THE LIVE LOUNGE',W/2,124);ctx.shadowBlur=0;
   const b=FURN.board;
   ctx.fillStyle='#0d0f14';rr(b.x,b.y,b.w,b.h,8);ctx.fill();
   ctx.strokeStyle='#5d4634';ctx.lineWidth=3;rr(b.x,b.y,b.w,b.h,8);ctx.stroke();
@@ -539,6 +537,9 @@ function drawRoom(t){
   ctx.strokeStyle='rgba(0,0,0,0.10)';ctx.lineWidth=1;
   for(let x=Math.floor(vx/46)*46;x<vR;x+=46){ctx.beginPath();ctx.moveTo(x,WALL);ctx.lineTo(x,vB);ctx.stroke()}
   for(let y=WALL+30;y<vB;y+=30){ctx.beginPath();ctx.moveTo(vx,y);ctx.lineTo(vR,y);ctx.stroke()}
+  // anonymous reminder under the title — drawn AFTER the floor so it isn't painted over
+  ctx.font='700 10px Avenir Next, sans-serif';ctx.textAlign='center';ctx.fillStyle='rgba(255,214,150,.92)';
+  ctx.fillText('🔒 anonymous · no real names',W/2,138);
   // warm light pools (v2 cozy)
   for(const[lx,ly]of[[197,360],[377,390],[103,210]]){
     const g2=ctx.createRadialGradient(lx,ly,8,lx,ly,90);
@@ -935,6 +936,7 @@ class RealNet{
     ch.on('broadcast',{event:'cjoinrequest'},({payload:m})=>handleCjoinRequest(m));
     ch.on('broadcast',{event:'cjoinapprove'},({payload:m})=>handleCjoinApprove(m));
     ch.on('broadcast',{event:'cjoinreject'},({payload:m})=>handleCjoinReject(m));
+    ch.on('broadcast',{event:'cleave'},({payload:m})=>handleCleave(m));
     await new Promise((res,rej)=>{
       ch.subscribe(async s=>{
         if(s==='SUBSCRIBED'){
@@ -1079,23 +1081,24 @@ function updatePill(){
 $('dockMin').onclick=()=>{$('chatDock').classList.remove('open');updatePill()};
 $('chatPill').onclick=openDock;
 $('dockLeave').onclick=()=>leaveConv();
-function leaveConv(){
-  if(!me.conv)return;
+function closeChatLocal(){
   me.conv=null;me.pendingInvite=null;me.approaching=null;net&&net.sync();
   $('chatDock').classList.remove('open');
   $('chatPill').style.display='none';
 }
+function leaveConv(){
+  if(!me.conv)return;
+  net&&net.send('cleave',{conv:me.conv,from:me.id,fromName:me.name});
+  closeChatLocal();
+}
+function handleCleave(m){
+  if(me.conv===m.conv){closeChatLocal();toast((m.fromName||'they')+' left — chat ended');}
+}
 const CHAT_RANGE=74; // A25: must be this close to start/stay in a chat
 function nearPerson(p){return p&&Math.hypot(me.x-p.x,me.y-p.y)<CHAT_RANGE;}
-function approachToChat(p){
-  if(p.conv&&p.conv!==me.conv){ // join an existing circle — walk over first
-    if(nearPerson(p)){requestJoin(p.conv);}
-    else{const[nx,ny]=nudge(p.x+20,p.y+6);me.tx=nx;me.ty=ny;me.approaching={id:p.id,mode:'join',conv:p.conv};toast('walk over to join…');}
-    return;
-  }
-  if(p.conv&&p.conv===me.conv){openDock();return;}
-  if(nearPerson(p)){startChatWith(p);}
-  else{const[nx,ny]=nudge(p.x+18,p.y+4);me.tx=nx;me.ty=ny;me.approaching={id:p.id,mode:'chat'};toast('walk over to '+(p.name||'them')+'…');}
+function approachToChat(p){ // just walk toward them; you START the chat by tapping them again once close
+  const[nx,ny]=nudge(p.x+18,p.y+4);me.tx=nx;me.ty=ny;
+  toast((p.conv&&p.conv!==me.conv)?'walk over, then tap to join':'walk over, then tap '+(p.name||'them')+' to chat');
 }
 function joinConv(conv){
   me.conv=conv;net.sync();
@@ -1218,10 +1221,9 @@ function openPersonSheet(p){
   $('psName').textContent=p.name||'neighbour';
   $('psTag').textContent=p.tagline||p.blurb||'King West neighbour';
   const inConv=p.conv&&p.conv!==me.conv,mine=p.conv&&p.conv===me.conv;
-  if(inConv){$('psTalk').style.display='block';$('psTalk').textContent='💬 '+circleLabel(p.conv,false)}
-  else if(mine){$('psTalk').style.display='block';$('psTalk').textContent="💬 you're in this conversation"}
-  else $('psTalk').style.display='none';
-  $('psPrimary').textContent=inConv?'Join their chat':mine?'Open the chat':'💬 Message';
+  $('psTalk').style.display='block';
+  $('psTalk').textContent=inConv?'💬 in a chat · walk over to ask to join':mine?"💬 you're in this conversation":'🚶 walk over to start chatting';
+  $('psPrimary').textContent=mine?'Open the chat':'🚶 Walk over';
   if(me.holding&&p.id!==me.id){
     const drinks=DRINK_LABEL;
     $('psGift').style.display='block';$('psGift').textContent='🎁 Offer your '+drinks[me.holding];
@@ -1231,7 +1233,7 @@ function openPersonSheet(p){
 $('psWave').onclick=()=>{const p=psTarget;closeSheets();
   me.emote='👋';me.emoteT=performance.now()+2500;net.send('emote',{id:me.id,e:'👋'});
   toast('you waved at '+(p?p.name:'them')+' 👋')};
-$('psPrimary').onclick=()=>{const p=psTarget;closeSheets();if(!p)return;approachToChat(p)};
+$('psPrimary').onclick=()=>{const p=psTarget;closeSheets();if(!p)return;if(p.conv&&p.conv===me.conv){openDock();return;}approachToChat(p);};
 $('psGift').onclick=()=>{const p=psTarget;closeSheets();if(!p)return;
   net.send('gift',{from:me.id,fromName:me.name,to:p.id,kind:'offer',item:me.holding});toast('offer sent…')};
 
@@ -1239,7 +1241,7 @@ cv.addEventListener('pointerdown',e=>{
   if(!joined)return;
   const [x,y]=screenToWorld(e.clientX,e.clientY);  // BUG-001: invert camera+zoom
   for(const p of[...players.values()].sort((a,b)=>b.y-a.y)){
-    if(Math.hypot(x-p.x,y-(p.y-38))<16||Math.hypot(x-p.x,y-(p.y-20))<15){if(p.joinReq&&p.joinReq.incoming&&me.conv===p.joinReq.conv){answerJoin(p,confirm((p.joinReq.fromName||p.name)+" wants to join your chat. Let them in?"));return}openPersonSheet(p);return}
+    if(Math.hypot(x-p.x,y-(p.y-38))<16||Math.hypot(x-p.x,y-(p.y-20))<15){if(p.joinReq&&p.joinReq.incoming&&me.conv===p.joinReq.conv){answerJoin(p,confirm((p.joinReq.fromName||p.name)+" wants to join your chat. Let them in?"));return}if(nearPerson(p)){if(p.conv&&p.conv!==me.conv)requestJoin(p.conv);else if(p.conv&&p.conv===me.conv)openDock();else startChatWith(p);}else openPersonSheet(p);return}
   }
   // tap the bubble haze over a conversation
   {const cg={};for(const p of players.values())if(p.conv)(cg[p.conv]=cg[p.conv]||[]).push(p);
@@ -1414,10 +1416,6 @@ function loop(){
   if(!joined){for(const p of [...ENTRY_BOTS].sort((a,b)=>a.y-b.y))drawAvatar(p,t);}
   if(joined){
     for(const p of players.values())step(p,dt);
-    if(me.approaching){const tp=players.get(me.approaching.id),arrived=Math.hypot(me.tx-me.x,me.ty-me.y)<6;
-      if(!tp)me.approaching=null;
-      else if(nearPerson(tp)){const a=me.approaching;me.approaching=null;if(a.mode==='join')requestJoin(a.conv);else startChatWith(tp);}
-      else if(arrived){me.approaching=null;toast((tp.name||'they')+' moved — tap them again');}}
     const all=[...players.values(),me].sort((a,b)=>a.y-b.y);
     for(const p of all)drawAvatar(p,t);
     // v3: drifting bubble haze over each conversation
@@ -1427,9 +1425,9 @@ function loop(){
        const cx=m.reduce((s,q)=>s+q.x,0)/m.length;
        const cy=Math.min(...m.map(q=>q.y))-78;
        drawHaze(cx,cy,t*0.001,hashSeed(k));}}
-    if(t-lastMoveSent>140&&((me.x|0)!==me._sx||(me.y|0)!==me._sy)){
-      lastMoveSent=t;me._sx=me.x|0;me._sy=me.y|0;net.send('move',{id:me.id,x:me._sx,y:me._sy}); // A26: broadcast ACTUAL position so others don't desync vs target/collision
-    }
+    {const moving=Math.abs(me.tx-me.x)>2||Math.abs(me.ty-me.y)>2;
+     if(moving){if(t-lastMoveSent>140){lastMoveSent=t;net.send('move',{id:me.id,x:me.x|0,y:me.y|0});}me._wasMoving=true;}
+     else if(me._wasMoving){me._wasMoving=false;net.send('move',{id:me.id,x:me.x|0,y:me.y|0});net.sync&&net.sync();}} // A26: on STOP, send exact pos + refresh PRESENCE so newly-joined peers seed at the resting spot (the real desync cause)
   }
   drawVignette();
 }
