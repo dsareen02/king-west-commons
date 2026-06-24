@@ -184,7 +184,7 @@
     <div class="view active" id="view-room">
       <div id="stage"><canvas id="cv"></canvas></div>
       <div id="hud">
-        <div class="chip" id="roomChip"><b>THE LIVE LOUNGE</b> · <span id="online">1</span> here</div>
+        <div class="chip" id="roomChip"><b>KING WEST COMMONS</b> · <span id="online">1</span> here</div>
         <div style="display:flex;gap:8px;align-items:flex-start">
           <div class="chip" id="ptsChip">⭐ <span id="pts">0</span></div>
           <button class="chip" id="btnMenu" style="pointer-events:auto;color:var(--gold);font-size:15px;line-height:1.2">☰</button>
@@ -509,9 +509,9 @@ function drawRoom(t){
      from under the corner HUD. */
   ctx.font='700 13px Avenir Next, sans-serif';ctx.textAlign='center';
   ctx.fillStyle='#ffc46a';ctx.shadowColor='#ffc46a';ctx.shadowBlur=12;
-  ctx.fillText('THE LIVE LOUNGE',W/2,124);ctx.shadowBlur=0;
-  ctx.font='600 9px Avenir Next, sans-serif';ctx.fillStyle='rgba(255,196,106,.7)';
-  ctx.fillText('anonymous · no real names',W/2,138);
+  ctx.fillText('THE LIVE LOUNGE',W/2,114);ctx.shadowBlur=0;
+  ctx.font='700 10px Avenir Next, sans-serif';ctx.fillStyle='rgba(255,214,150,.95)';
+  ctx.fillText('🔒 anonymous · no real names',W/2,126);
   const b=FURN.board;
   ctx.fillStyle='#0d0f14';rr(b.x,b.y,b.w,b.h,8);ctx.fill();
   ctx.strokeStyle='#5d4634';ctx.lineWidth=3;rr(b.x,b.y,b.w,b.h,8);ctx.stroke();
@@ -692,7 +692,7 @@ function drawAvatar(p,t){
   rr(x-nw/2,y-66+bob,nw,13,6);ctx.fill();
   ctx.fillStyle=p.bot?'#bfd7a8':'#ffe2ad';ctx.fillText(p.name||'',x,y-56+bob);
   if(p.conv){ctx.font='12px sans-serif';
-    ctx.fillText('💬',x+15,y-58+bob)} // E24: removed the white circle that sat behind the 💬 (looked like a doubled bubble)
+    ctx.fillText('💬',x+15,y-42+bob)} // E24/E26: bubble beside the head, clear of the name label
   if(p.emote&&t<p.emoteT){ctx.font='15px sans-serif';ctx.fillText(p.emote,x-16,y-60+bob)}
   // speech text visible only inside my circle
   if(p.bubble&&t<p.bubbleT&&me.conv&&p.conv===me.conv){
@@ -1081,9 +1081,21 @@ $('chatPill').onclick=openDock;
 $('dockLeave').onclick=()=>leaveConv();
 function leaveConv(){
   if(!me.conv)return;
-  me.conv=null;net&&net.sync();
+  me.conv=null;me.pendingInvite=null;me.approaching=null;net&&net.sync();
   $('chatDock').classList.remove('open');
   $('chatPill').style.display='none';
+}
+const CHAT_RANGE=74; // A25: must be this close to start/stay in a chat
+function nearPerson(p){return p&&Math.hypot(me.x-p.x,me.y-p.y)<CHAT_RANGE;}
+function approachToChat(p){
+  if(p.conv&&p.conv!==me.conv){ // join an existing circle — walk over first
+    if(nearPerson(p)){requestJoin(p.conv);}
+    else{const[nx,ny]=nudge(p.x+20,p.y+6);me.tx=nx;me.ty=ny;me.approaching={id:p.id,mode:'join',conv:p.conv};toast('walk over to join…');}
+    return;
+  }
+  if(p.conv&&p.conv===me.conv){openDock();return;}
+  if(nearPerson(p)){startChatWith(p);}
+  else{const[nx,ny]=nudge(p.x+18,p.y+4);me.tx=nx;me.ty=ny;me.approaching={id:p.id,mode:'chat'};toast('walk over to '+(p.name||'them')+'…');}
 }
 function joinConv(conv){
   me.conv=conv;net.sync();
@@ -1100,7 +1112,7 @@ function startChatWith(p){
   convLogs.set(conv,[]);
   pushLog(conv,{sys:true,text:'you started talking to '+p.name});
   if(p.bot){const dp=players.get(p.id);dp.conv=conv}
-  net.send('cinvite',{conv,to:p.id,from:me.id,fromName:me.name});
+  me.pendingInvite={to:p.id,conv:conv}; // A24: don't pull them in until the first message
   openDock();
   setTimeout(()=>$('chatInput').focus(),250);
 }
@@ -1109,6 +1121,7 @@ $('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendMsg()});
 function sendMsg(){
   const t=$('chatInput').value.trim();if(!t||!me.conv)return;
   $('chatInput').value='';
+  if(me.pendingInvite&&me.pendingInvite.conv===me.conv){net.send('cinvite',{conv:me.conv,to:me.pendingInvite.to,from:me.id,fromName:me.name});me.pendingInvite=null;} // A24: first message pulls them in
   const log=convLogs.get(me.conv)||[];
   if(!log.some(m=>m.mine&&!m.sys))addPts(2,'started talking');
   pushLog(me.conv,{from:me.id,fromName:me.name,text:t});
@@ -1177,8 +1190,8 @@ function showActions(p,sx,sy){
   html+=`<button data-a="wave">👋 Wave</button><button data-a="walk">🚶 Walk over</button>`;
   showMenu(html,sx,sy,b=>{
     const a=b.dataset.a;
-    if(a==='chat')startChatWith(p);
-    if(a==='join'){const[nx,ny]=nudge(p.x+20,p.y+6);me.tx=nx;me.ty=ny;joinConv(p.conv)}
+    if(a==='chat')approachToChat(p);
+    if(a==='join')approachToChat(p);
     if(a==='wave'){me.emote='👋';me.emoteT=performance.now()+2500;net.send('emote',{id:me.id,e:'👋'})}
     if(a==='walk'){const[nx,ny]=nudge(p.x+18,p.y);me.tx=nx;me.ty=ny}
     if(a==='gift'){net.send('gift',{from:me.id,fromName:me.name,to:p.id,kind:'offer',item:me.holding});toast('offer sent…')}
@@ -1218,10 +1231,7 @@ function openPersonSheet(p){
 $('psWave').onclick=()=>{const p=psTarget;closeSheets();
   me.emote='👋';me.emoteT=performance.now()+2500;net.send('emote',{id:me.id,e:'👋'});
   toast('you waved at '+(p?p.name:'them')+' 👋')};
-$('psPrimary').onclick=()=>{const p=psTarget;closeSheets();if(!p)return;
-  if(p.conv&&p.conv!==me.conv){const[nx,ny]=nudge(p.x+20,p.y+6);me.tx=nx;me.ty=ny;requestJoin(p.conv)}
-  else if(p.conv&&p.conv===me.conv)openDock();
-  else startChatWith(p)};
+$('psPrimary').onclick=()=>{const p=psTarget;closeSheets();if(!p)return;approachToChat(p)};
 $('psGift').onclick=()=>{const p=psTarget;closeSheets();if(!p)return;
   net.send('gift',{from:me.id,fromName:me.name,to:p.id,kind:'offer',item:me.holding});toast('offer sent…')};
 
@@ -1250,7 +1260,11 @@ cv.addEventListener('pointerdown',e=>{
   }
   if(inRect(x,y,FURN.board,6)){openSheet('newsSheet');return}
   if(inRect(x,y,FURN.cork,6)){openSheet('boardSheet');return}
-  if(y>WALL){const[nx,ny]=nudge(x,y);me.tx=nx;me.ty=ny}
+  if(y>WALL){
+    if(me.conv){const mates=[...players.values()].filter(q=>q.conv===me.conv&&q.id!==me.id&&!q.bot);
+      if(mates.length&&mates.every(q=>Math.hypot(x-q.x,y-q.y)>CHAT_RANGE)){if(!confirm('Walk away and leave this chat?'))return;leaveConv();}}
+    const[nx,ny]=nudge(x,y);me.tx=nx;me.ty=ny;
+  }
 });
 
 /* ---------- v3: bubble haze (from the shared design) ---------- */
@@ -1400,6 +1414,10 @@ function loop(){
   if(!joined){for(const p of [...ENTRY_BOTS].sort((a,b)=>a.y-b.y))drawAvatar(p,t);}
   if(joined){
     for(const p of players.values())step(p,dt);
+    if(me.approaching){const tp=players.get(me.approaching.id),arrived=Math.hypot(me.tx-me.x,me.ty-me.y)<6;
+      if(!tp)me.approaching=null;
+      else if(nearPerson(tp)){const a=me.approaching;me.approaching=null;if(a.mode==='join')requestJoin(a.conv);else startChatWith(tp);}
+      else if(arrived){me.approaching=null;toast((tp.name||'they')+' moved — tap them again');}}
     const all=[...players.values(),me].sort((a,b)=>a.y-b.y);
     for(const p of all)drawAvatar(p,t);
     // v3: drifting bubble haze over each conversation
@@ -1409,8 +1427,8 @@ function loop(){
        const cx=m.reduce((s,q)=>s+q.x,0)/m.length;
        const cy=Math.min(...m.map(q=>q.y))-78;
        drawHaze(cx,cy,t*0.001,hashSeed(k));}}
-    if(t-lastMoveSent>140&&(Math.abs(me.tx-me.x)>2||Math.abs(me.ty-me.y)>2)){
-      lastMoveSent=t;net.send('move',{id:me.id,x:me.tx|0,y:me.ty|0});
+    if(t-lastMoveSent>140&&((me.x|0)!==me._sx||(me.y|0)!==me._sy)){
+      lastMoveSent=t;me._sx=me.x|0;me._sy=me.y|0;net.send('move',{id:me.id,x:me._sx,y:me._sy}); // A26: broadcast ACTUAL position so others don't desync vs target/collision
     }
   }
   drawVignette();
@@ -1541,8 +1559,8 @@ setInterval(()=>{if(!joined)drawPreview()},400);
   resize();rebuild();requestAnimationFrame(frame);
 })();
 // live-update the left preview (name label above head + tagline under avatar) on every keystroke
-$('nameInput').addEventListener('input',drawPreview);
-$('tagInput').addEventListener('input',drawPreview);
+$('nameInput').addEventListener('input',()=>{me.name=$('nameInput').value;localStorage.setItem('kwc_name',me.name);drawPreview();});
+$('tagInput').addEventListener('input',()=>{me.tagline=$('tagInput').value;localStorage.setItem('kwc_tag',me.tagline);drawPreview();});
 $('enterBtn').onclick=async()=>{
   const n=$('nameInput').value.trim();
   if(!n){$('nameInput').focus();return}
