@@ -133,6 +133,14 @@
   .bWide{width:100%;margin-top:10px;padding:13px;border-radius:99px;background:#332a21;border:none;color:var(--cream);font-weight:600;font-size:14px}
   #demoBadge{display:none;position:absolute;top:max(54px,calc(env(safe-area-inset-top) + 44px));left:50%;transform:translateX(-50%);z-index:5;font-size:10px;letter-spacing:.1em;color:#ffb1a3;background:rgba(80,25,18,.8);border-radius:12px;padding:4px 12px;white-space:nowrap}
   #toastC{position:fixed;bottom:13%;left:50%;transform:translateX(-50%);z-index:12;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:max-content;max-width:92vw}
+  #dockHead{cursor:move}
+  #chatReqPop{display:none;position:fixed;top:18%;left:50%;transform:translateX(-50%);z-index:30;background:rgba(23,19,16,.97);border:1px solid var(--gold);border-radius:16px;padding:14px 16px;box-shadow:0 10px 30px rgba(0,0,0,.5);text-align:center;max-width:88vw}
+  #chatReqMsg{color:var(--cream);font-size:14px;margin-bottom:10px}
+  #chatReqMsg b{color:var(--gold)}
+  #chatReqBtns{display:flex;gap:8px;justify-content:center}
+  #chatReqBtns button{border:none;border-radius:10px;padding:9px 18px;font-size:14px;font-weight:700;cursor:pointer}
+  #chatReqYes{background:var(--gold);color:#2a1c0e}
+  #chatReqNo{background:#3a2f25;color:var(--cream)}
   .toastMsg{background:rgba(23,19,16,.92);border:1px solid rgba(255,196,106,.45);border-radius:12px;padding:9px 16px;font-size:13px;animation:tIn .3s,tOut .4s 3.6s forwards;max-width:92vw}
   @keyframes tIn{from{opacity:0;transform:translateY(-8px)}}
   @keyframes tOut{to{opacity:0}}
@@ -234,6 +242,10 @@
   <div id="dockRow"><input id="chatInput" placeholder="say something…" maxlength="140"><button class="send" id="sendBtn">➤</button></div>
 </div>
 <button id="chatPill">💬 …</button>
+<div id="chatReqPop">
+  <div id="chatReqMsg"><b id="chatReqName"></b> wants to start a chat</div>
+  <div id="chatReqBtns"><button id="chatReqYes">Accept</button><button id="chatReqNo">Decline</button></div>
+</div>
 
 <div class="sheet" id="newsSheet">
   <h3>📰 THE AI WIRE — live<button class="x" data-close="newsSheet">✕</button></h3>
@@ -928,6 +940,9 @@ class RealNet{
     ch.on('broadcast',{event:'cjoinapprove'},({payload:m})=>handleCjoinApprove(m));
     ch.on('broadcast',{event:'cjoinreject'},({payload:m})=>handleCjoinReject(m));
     ch.on('broadcast',{event:'cleave'},({payload:m})=>handleCleave(m));
+    ch.on('broadcast',{event:'chatreq'},({payload:m})=>handleChatReq(m));
+    ch.on('broadcast',{event:'chataccept'},({payload:m})=>handleChatAccept(m));
+    ch.on('broadcast',{event:'chatdecline'},({payload:m})=>handleChatDecline(m));
     await new Promise((res,rej)=>{
       ch.subscribe(async s=>{
         if(s==='SUBSCRIBED'){
@@ -1050,7 +1065,8 @@ function pushLog(conv,entry){
 }
 function renderDock(){
   if(!me.conv)return;
-  $('dockTopic').textContent='💬 '+(convTopics[me.conv]||'new conversation');
+  const others=convMembers(me.conv).filter(p=>p.id!==me.id).map(p=>p.name||'someone');
+  $('dockTopic').textContent='💬 '+(others.length?('you & '+others.join(' & ')):(me.pendingChat?('waiting for '+(me.pendingChat.name||'them')+'…'):'your chat'));
   $('dockMembers').textContent=convMembers(me.conv).map(p=>p.id===me.id?'you':p.name).join(' · ');
   const log=$('dockLog');
   const h=convLogs.get(me.conv)||[];
@@ -1072,8 +1088,14 @@ function updatePill(){
 $('dockMin').onclick=()=>{$('chatDock').classList.remove('open');updatePill()};
 $('chatPill').onclick=openDock;
 $('dockLeave').onclick=()=>leaveConv();
+$('chatReqYes').onclick=()=>answerChatReq(true);
+$('chatReqNo').onclick=()=>answerChatReq(false);
+(function(){const dock=$('chatDock'),head=$('dockHead');let drag=false,sx,sy,ox,oy; // draggable chat box so it doesn't cover the room
+  head.addEventListener('pointerdown',function(e){if(e.target.closest('.dockBtn'))return;drag=true;const r=dock.getBoundingClientRect();ox=r.left;oy=r.top;sx=e.clientX;sy=e.clientY;dock.style.position='fixed';dock.style.right='auto';dock.style.bottom='auto';dock.style.left=ox+'px';dock.style.top=oy+'px';try{head.setPointerCapture(e.pointerId);}catch(_){}});
+  head.addEventListener('pointermove',function(e){if(!drag)return;dock.style.left=Math.max(4,Math.min(innerWidth-60,ox+e.clientX-sx))+'px';dock.style.top=Math.max(4,Math.min(innerHeight-60,oy+e.clientY-sy))+'px';});
+  head.addEventListener('pointerup',function(e){drag=false;try{head.releasePointerCapture(e.pointerId);}catch(_){}});})();
 function closeChatLocal(){
-  me.conv=null;me.pendingInvite=null;me.approaching=null;net&&net.sync();
+  me.conv=null;me.pendingInvite=null;me.pendingChat=null;me.approaching=null;net&&net.sync();
   $('chatDock').classList.remove('open');
   $('chatPill').style.display='none';
 }
@@ -1098,6 +1120,46 @@ function joinConv(conv){
   net.send('cjoin',{conv,id:me.id,name:me.name});
   addPts(1,'joined a circle');
   openDock();
+}
+let incomingChat=null; // an incoming "wants to chat" request awaiting my Accept/Decline
+function startChatRequest(p){
+  if(p.conv){requestJoin(p.conv);return;} // they're in a group → ask to join
+  const conv='c'+Math.random().toString(36).slice(2,9);
+  me.conv=conv;net.sync();
+  if(!convLogs.has(conv))convLogs.set(conv,[]);
+  me.pendingChat={to:p.id,conv:conv,name:p.name};
+  pushLog(conv,{sys:true,text:'waiting for '+(p.name||'them')+' to accept…'});
+  openDock();
+  net.send('chatreq',{conv:conv,to:p.id,from:me.id,fromName:me.name});
+  setTimeout(function(){if(me.pendingChat&&me.pendingChat.conv===conv&&!me.pendingChat.accepted){toast((p.name||'they')+" didn't answer");me.pendingChat=null;closeChatLocal();}},20000);
+}
+function handleChatReq(m){
+  if(m.to!==me.id)return;
+  if(me.conv||incomingChat){net.send('chatdecline',{conv:m.conv,to:m.from,reason:'busy'});return;}
+  incomingChat={conv:m.conv,from:m.from,fromName:m.fromName};
+  $('chatReqName').textContent=m.fromName||'someone';
+  $('chatReqPop').style.display='block';
+}
+function answerChatReq(accept){
+  if(!incomingChat)return;
+  const ic=incomingChat;incomingChat=null;$('chatReqPop').style.display='none';
+  if(accept){
+    me.conv=ic.conv;net.sync();
+    if(!convLogs.has(ic.conv))convLogs.set(ic.conv,[]);
+    pushLog(ic.conv,{sys:true,text:'you joined '+(ic.fromName||'the chat')});
+    openDock();
+    net.send('chataccept',{conv:ic.conv,to:ic.from,from:me.id,fromName:me.name});
+  }else{
+    net.send('chatdecline',{conv:ic.conv,to:ic.from});
+  }
+}
+function handleChatAccept(m){
+  if(m.to!==me.id)return;
+  if(me.pendingChat&&me.pendingChat.conv===m.conv){me.pendingChat.accepted=true;pushLog(m.conv,{sys:true,text:(m.fromName||'they')+' joined — say hi 👋'});renderDock();}
+}
+function handleChatDecline(m){
+  if(m.to!==me.id)return;
+  if(me.pendingChat&&me.pendingChat.conv===m.conv){toast((me.pendingChat.name||'they')+(m.reason==='busy'?' is busy right now':' declined'));me.pendingChat=null;closeChatLocal();}
 }
 function startChatWith(p){
   if(p.conv){requestJoin(p.conv);return}
@@ -1211,10 +1273,11 @@ function openPersonSheet(p){
   psTarget=p;
   $('psName').textContent=p.name||'neighbour';
   $('psTag').textContent=p.tagline||p.blurb||'King West neighbour';
-  const inConv=p.conv&&p.conv!==me.conv,mine=p.conv&&p.conv===me.conv;
+  const close=nearPerson(p),mine=p.conv&&p.conv===me.conv,theirs=p.conv&&p.conv!==me.conv;
   $('psTalk').style.display='block';
-  $('psTalk').textContent=inConv?'💬 in a chat · walk over to ask to join':mine?"💬 you're in this conversation":'🚶 walk over to start chatting';
-  $('psPrimary').textContent=mine?'Open the chat':'🚶 Walk over';
+  $('psTalk').textContent=mine?"💬 you're in this conversation":close?(theirs?"💬 they're chatting — ask to join":'✅ right next to them'):'🚶 walk over to chat';
+  $('psWave').style.display=(close||mine)?'none':''; // FAR = Wave + Walk over · CLOSE = Start a chat
+  $('psPrimary').textContent=mine?'Open the chat':close?(theirs?'➕ Ask to join':'💬 Start a chat'):'🚶 Walk over';
   if(me.holding&&p.id!==me.id){
     const drinks=DRINK_LABEL;
     $('psGift').style.display='block';$('psGift').textContent='🎁 Offer your '+drinks[me.holding];
@@ -1224,7 +1287,7 @@ function openPersonSheet(p){
 $('psWave').onclick=()=>{const p=psTarget;closeSheets();
   me.emote='👋';me.emoteT=performance.now()+2500;net.send('emote',{id:me.id,e:'👋'});
   toast('you waved at '+(p?p.name:'them')+' 👋')};
-$('psPrimary').onclick=()=>{const p=psTarget;closeSheets();if(!p)return;if(p.conv&&p.conv===me.conv){openDock();return;}approachToChat(p);};
+$('psPrimary').onclick=()=>{const p=psTarget;closeSheets();if(!p)return;if(p.conv&&p.conv===me.conv){openDock();return;}if(nearPerson(p)){if(p.conv)requestJoin(p.conv);else startChatRequest(p);}else approachToChat(p);};
 $('psGift').onclick=()=>{const p=psTarget;closeSheets();if(!p)return;
   net.send('gift',{from:me.id,fromName:me.name,to:p.id,kind:'offer',item:me.holding});toast('offer sent…')};
 
@@ -1232,7 +1295,7 @@ cv.addEventListener('pointerdown',e=>{
   if(!joined)return;
   const [x,y]=screenToWorld(e.clientX,e.clientY);  // BUG-001: invert camera+zoom
   for(const p of[...players.values()].sort((a,b)=>b.y-a.y)){
-    if(Math.hypot(x-p.x,y-(p.y-38))<16||Math.hypot(x-p.x,y-(p.y-20))<15){if(p.joinReq&&p.joinReq.incoming&&me.conv===p.joinReq.conv){answerJoin(p,confirm((p.joinReq.fromName||p.name)+" wants to join your chat. Let them in?"));return}if(nearPerson(p)){if(p.conv&&p.conv!==me.conv)requestJoin(p.conv);else if(p.conv&&p.conv===me.conv)openDock();else startChatWith(p);}else openPersonSheet(p);return}
+    if(Math.hypot(x-p.x,y-(p.y-38))<16||Math.hypot(x-p.x,y-(p.y-20))<15){if(p.joinReq&&p.joinReq.incoming&&me.conv===p.joinReq.conv){answerJoin(p,confirm((p.joinReq.fromName||p.name)+" wants to join your chat. Let them in?"));return}openPersonSheet(p);return}
   }
   // tap the bubble haze over a conversation
   {const cg={};for(const p of players.values())if(p.conv)(cg[p.conv]=cg[p.conv]||[]).push(p);
@@ -1558,6 +1621,7 @@ $('enterBtn').onclick=async()=>{
   me.name=n;localStorage.setItem('kwc_name',n);
   me.tagline=$('tagInput').value.trim();localStorage.setItem('kwc_tag',me.tagline);
   $('enterBtn').textContent='OPENING THE DOOR…';
+  me.x=me.tx=200+Math.floor(Math.random()*200);me.y=me.ty=400+Math.floor(Math.random()*130); // spawn spread (don't stack on each other)
   net=LIVE?new RealNet():new DemoNet();
   try{await net.join()}catch(e){$('enterBtn').textContent='ENTER THE LOUNGE';return}
   // A22: in LIVE mode also run the ambient bots locally so the room is never empty.
