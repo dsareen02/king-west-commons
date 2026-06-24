@@ -301,8 +301,8 @@
 'use strict';
 /* ================= CONFIG — paste your Supabase keys here to go LIVE ================= */
 const CONFIG={
-  SUPABASE_URL:'',
-  SUPABASE_ANON_KEY:'',
+  SUPABASE_URL:'https://svbzerosxhlrrgzpwbbg.supabase.co',
+  SUPABASE_ANON_KEY:'sb_publishable_-42KUkujeJ4M-rmjXdkktA_bllvoe3s',
   ROOM:'commons-cafe-1',
   CAP:12,
   /* Bettermode pages for the tabs (embedded in-app)
@@ -852,7 +852,7 @@ $('btnMusic').onclick=e=>{
 
 /* ---------- networking ---------- */
 const LIVE=!!(CONFIG.SUPABASE_URL&&CONFIG.SUPABASE_ANON_KEY);
-let net=null,joined=false;
+let net=null,joined=false,bots=null; // bots = client-only ambient bot engine; in LIVE mode it runs alongside RealNet (A22)
 function makeProfile(){return{name:me.name,skin:me.skin,color:me.color,hat:me.hat,species:me.species,tagline:me.tagline,x:me.x|0,y:me.y|0,holding:me.holding,conv:me.conv}}
 function upsert(id,data){
   if(id===me.id)return;
@@ -887,6 +887,9 @@ function requestJoin(conv){
   if(me.conv===conv){openDock();return;}
   if(me.joinReq&&me.joinReq.state==='pending'){toast("you already asked, give them a sec");return;}
   me.joinReq={conv:conv,state:'pending',t:performance.now()};
+  // an all-bot circle is handled purely locally (the bot engine declines) — never broadcast it to real peers
+  const mem=[...players.values()].filter(p=>p.conv===conv);
+  if(mem.length&&mem.every(p=>p.bot)){(bots||net).send('cjoinrequest',{conv:conv,from:me.id,fromName:me.name,name:me.name});return;}
   net.send('cjoinrequest',{conv:conv,from:me.id,fromName:me.name,name:me.name});
 }
 function handleCjoinRequest(m){
@@ -918,7 +921,7 @@ class RealNet{
       const st=ch.presenceState();
       const ids=new Set(Object.keys(st));
       for(const id of ids){if(id!==me.id)upsert(id,st[id][0])}
-      for(const id of[...players.keys()])if(!ids.has(id))players.delete(id);
+      for(const id of[...players.keys()])if(!ids.has(id)&&!players.get(id).bot)players.delete(id); // keep ambient bots (A22): they aren't in Supabase presence
       refreshCount();
     });
     ch.on('broadcast',{event:'move'},({payload:m})=>{const p=players.get(m.id);if(p){p.tx=m.x;p.ty=m.y}});
@@ -941,7 +944,7 @@ class RealNet{
       });
     });
   }
-  send(ev,payload){this.ch.send({type:'broadcast',event:ev,payload})}
+  send(ev,payload){this.ch.send({type:'broadcast',event:ev,payload});if(bots)bots.send(ev,payload);} // also let local ambient bots react (A22); their guards ignore real-only circles
   sync(){this.ch.track(makeProfile())}
 }
 
@@ -1033,7 +1036,10 @@ class DemoNet{
       setTimeout(()=>{receiveGift({from:m.to,fromName:p.name,to:me.id,kind:'accept',item:m.item});p.holding=m.item},1200);
     }
     if(ev==='cjoinrequest'){
-      // an all-bot circle always declines, after a thoughtful ~7-9s beat
+      // only an ALL-BOT circle declines; in LIVE mode a real circle uses the real accept/decline flow
+      const mem=[...players.values()].filter(p=>p.conv===m.conv);
+      if(!(mem.length&&mem.every(p=>p.bot)))return;
+      // a thoughtful ~7-9s beat, then a friendly decline
       const ms=7000+Math.random()*2500;
       setTimeout(function(){handleCjoinReject({conv:m.conv,to:me.id});},ms);
     }
@@ -1544,9 +1550,12 @@ $('enterBtn').onclick=async()=>{
   $('enterBtn').textContent='OPENING THE DOOR…';
   net=LIVE?new RealNet():new DemoNet();
   try{await net.join()}catch(e){$('enterBtn').textContent='ENTER THE LOUNGE';return}
+  // A22: in LIVE mode also run the ambient bots locally so the room is never empty.
+  // They chat only to each other, are client-only (never broadcast), and always decline join requests.
+  if(LIVE){bots=new DemoNet();try{await bots.join()}catch(e){}}
   joined=true;$('join').style.display='none';
   setTimeout(fit,50);
-  if(LIVE)toast("you're live, everyone here is real");
+  if(LIVE)toast("welcome to the lounge ✨");
   const v=localStorage.getItem('kwc_vibe');
   if(v&&v!=='off'){Music.start(v);$('btnMusic').classList.add('on');$('btnMusic').textContent='🎵♪'}
 };
