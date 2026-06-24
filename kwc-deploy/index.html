@@ -1254,8 +1254,10 @@ cv.addEventListener('pointerdown',e=>{
   if(inRect(x,y,FURN.board,6)){openSheet('newsSheet');return}
   if(inRect(x,y,FURN.cork,6)){openSheet('boardSheet');return}
   if(y>WALL){
-    if(me.conv){const mates=[...players.values()].filter(q=>q.conv===me.conv&&q.id!==me.id&&!q.bot);
-      if(mates.length&&mates.every(q=>Math.hypot(x-q.x,y-q.y)>CHAT_RANGE)){if(!confirm('Walk away and leave this chat?'))return;leaveConv();}}
+    if(me.conv){ // in a chat you're BOUND to your partner — any walk-away leaves the chat (asks first)
+      if(!confirm('Leave this chat and walk away?'))return; // cancel = stay put, chat continues
+      leaveConv();
+    }
     const[nx,ny]=nudge(x,y);me.tx=nx;me.ty=ny;
   }
 });
