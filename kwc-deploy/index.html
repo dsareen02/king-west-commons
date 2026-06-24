@@ -186,7 +186,7 @@
     <div class="view active" id="view-room">
       <div id="stage"><canvas id="cv"></canvas></div>
       <div id="hud">
-        <div class="chip" id="roomChip"><b>KING WEST COMMONS</b> · <span id="online">1</span> here</div>
+        <div class="chip" id="roomChip"><b>THE LIVE LOUNGE</b> · <span id="online">1</span> here</div>
         <div style="display:flex;gap:8px;align-items:flex-start">
           <div class="chip" id="ptsChip">⭐ <span id="pts">0</span></div>
           <button class="chip" id="btnMenu" style="pointer-events:auto;color:var(--gold);font-size:15px;line-height:1.2">☰</button>
@@ -500,7 +500,9 @@ function drawRoom(t){
      from under the corner HUD. */
   ctx.font='700 13px Avenir Next, sans-serif';ctx.textAlign='center';
   ctx.fillStyle='#ffc46a';ctx.shadowColor='#ffc46a';ctx.shadowBlur=12;
-  ctx.fillText('KING WEST COMMONS',W/2,124);ctx.shadowBlur=0;
+  ctx.fillText('THE LIVE LOUNGE',W/2,124);ctx.shadowBlur=0;
+  ctx.font='600 9px Avenir Next, sans-serif';ctx.fillStyle='rgba(255,196,106,.7)';
+  ctx.fillText('anonymous · no real names',W/2,138);
   const b=FURN.board;
   ctx.fillStyle='#0d0f14';rr(b.x,b.y,b.w,b.h,8);ctx.fill();
   ctx.strokeStyle='#5d4634';ctx.lineWidth=3;rr(b.x,b.y,b.w,b.h,8);ctx.stroke();
@@ -681,8 +683,7 @@ function drawAvatar(p,t){
   rr(x-nw/2,y-66+bob,nw,13,6);ctx.fill();
   ctx.fillStyle=p.bot?'#bfd7a8':'#ffe2ad';ctx.fillText(p.name||'',x,y-56+bob);
   if(p.conv){ctx.font='12px sans-serif';
-    ctx.fillStyle='rgba(255,255,255,0.95)';ctx.beginPath();ctx.arc(x+15,y-62+bob,8,0,7);ctx.fill();
-    ctx.fillText('💬',x+15,y-58+bob)}
+    ctx.fillText('💬',x+15,y-58+bob)} // E24: removed the white circle that sat behind the 💬 (looked like a doubled bubble)
   if(p.emote&&t<p.emoteT){ctx.font='15px sans-serif';ctx.fillText(p.emote,x-16,y-60+bob)}
   // speech text visible only inside my circle
   if(p.bubble&&t<p.bubbleT&&me.conv&&p.conv===me.conv){
