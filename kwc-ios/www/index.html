@@ -22,7 +22,8 @@
   #views{flex:1;position:relative;overflow:hidden}
   .view{position:absolute;inset:0;display:none;flex-direction:column}
   .view.active{display:flex}
-  #stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  #stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none}
+  #cv{touch-action:none}
   #tabbar{display:flex;background:rgba(18,15,12,.97);border-top:1px solid #332a21;padding:6px 4px calc(6px + env(safe-area-inset-bottom));backdrop-filter:blur(12px)}
   .tab{flex:1;background:none;border:none;color:#9c917f;font-size:10.5px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 0;transition:color .15s}
   .tab svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
